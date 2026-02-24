@@ -5,56 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      font-family: Arial;
       margin: 0;
-      padding: 0;
+      background: #f5f5f5;
     }
-
     .header {
       background: #e60000;
       color: white;
       padding: 15px;
       text-align: center;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
     }
-
     .container {
       padding: 15px;
     }
-
-    .form-box {
+    .card {
       background: white;
       padding: 15px;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
     }
-
     input, select, button {
       width: 100%;
       padding: 10px;
       margin-top: 10px;
-      font-size: 16px;
-      border-radius: 5px;
+      font-size: 15px;
+      border-radius: 6px;
       border: 1px solid #ccc;
     }
-
     button {
       background: #e60000;
       color: white;
       border: none;
       font-weight: bold;
     }
-
     button:hover {
       background: #cc0000;
     }
-
-    .success {
-      color: green;
+    #msg {
       margin-top: 10px;
       text-align: center;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -66,8 +58,7 @@
 </div>
 
 <div class="container">
-  <div class="form-box">
-
+  <div class="card">
     <form id="myForm">
 
       <select id="userType" required>
@@ -94,52 +85,63 @@
         <option value="Sarairanjan">Sarairanjan</option>
       </select>
 
+      <button type="button" onclick="getLocation()">Fetch Location</button>
+
       <button type="submit">Submit Entry</button>
 
     </form>
 
-    <div class="success" id="msg"></div>
+    <div id="msg"></div>
 
   </div>
 </div>
 
 <script>
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbxMSXkZAPyi_Z-o36Ee4lfC4oFT1dYZN_26sonIGnqjhUsdpMuNsWzEEq5jNya9sUBg1w/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbxJ1E4wHPzaDT7yA6-QDlLu60qeTTCKo2cukrm3ZD5NEoeXPs2zruyo3Pziy9gNMIpVGQ/exec";
+
+let userLatitude = "";
+let userLongitude = "";
+
+function getLocation(){
+  navigator.geolocation.getCurrentPosition(function(position){
+      userLatitude = position.coords.latitude;
+      userLongitude = position.coords.longitude;
+      alert("Location Fetched ✅");
+  }, function(){
+      alert("Location Allow karo ⚠️");
+  });
+}
 
 document.getElementById("myForm").addEventListener("submit", function(e){
   e.preventDefault();
 
-  navigator.geolocation.getCurrentPosition(function(position){
+  const data = {
+    userType: document.getElementById("userType").value,
+    lapu: document.getElementById("lapu").value,
+    contact: document.getElementById("contact").value,
+    shopName: document.getElementById("shopName").value,
+    owner: document.getElementById("owner").value,
+    latitude: userLatitude,
+    longitude: userLongitude,
+    address: document.getElementById("address").value,
+    area: document.getElementById("area").value,
+    zone: document.getElementById("zone").value
+  };
 
-    const data = {
-      userType: document.getElementById("userType").value,
-      lapu: document.getElementById("lapu").value,
-      contact: document.getElementById("contact").value,
-      shopName: document.getElementById("shopName").value,
-      owner: document.getElementById("owner").value,
-      latitude: position.coords.latitude,
-      longitude: position.coords.longitude,
-      address: document.getElementById("address").value,
-      area: document.getElementById("area").value,
-      zone: document.getElementById("zone").value
-    };
-
-    fetch(scriptURL, {
-      method: "POST",
-      body: JSON.stringify(data)
-    })
-    .then(res => res.json())
-    .then(response => {
-        document.getElementById("msg").innerHTML = "Entry Saved Successfully ✅";
-        document.getElementById("myForm").reset();
-    })
-    .catch(error => {
-        document.getElementById("msg").innerHTML = "Error Saving Data ❌";
-    });
-
-  }, function(){
-      alert("Location permission allow karo ⚠️");
+  fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(response => {
+      document.getElementById("msg").innerHTML = "Entry Saved Successfully ✅";
+      document.getElementById("myForm").reset();
+      userLatitude = "";
+      userLongitude = "";
+  })
+  .catch(error => {
+      document.getElementById("msg").innerHTML = "Error Saving Data ❌";
   });
 
 });
