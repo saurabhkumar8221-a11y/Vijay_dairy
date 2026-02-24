@@ -1,51 +1,111 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Vijay Dairy</title>
+  <title>Vijay Dairy Distributor</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body{
-      font-family: Arial;
-      padding:20px;
-      background:#f2f2f2;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 0;
     }
-    .box{
-      background:white;
-      padding:20px;
-      border-radius:10px;
+
+    .header {
+      background: #e60000;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
     }
-    input,button{
-      width:100%;
-      padding:10px;
-      margin:8px 0;
-      font-size:16px;
+
+    .container {
+      padding: 15px;
     }
-    button{
-      background:green;
-      color:white;
-      border:none;
-      border-radius:5px;
+
+    .form-box {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background: #e60000;
+      color: white;
+      border: none;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #cc0000;
+    }
+
+    .success {
+      color: green;
+      margin-top: 10px;
+      text-align: center;
     }
   </style>
 </head>
+
 <body>
 
-<div class="box">
-  <h2>Vijay Dairy Entry</h2>
+<div class="header">
+  Vijay Dairy Distributor
+</div>
 
-  <form id="myForm">
-    <input type="text" id="name" placeholder="Name" required>
-    <input type="number" id="mobile" placeholder="Mobile" required>
-    <input type="number" id="amount" placeholder="Amount" required>
-    <button type="submit">Submit</button>
-  </form>
+<div class="container">
+  <div class="form-box">
 
-  <p id="msg"></p>
+    <form id="myForm">
+
+      <select id="userType" required>
+        <option value="">Select Type</option>
+        <option value="Agent">Agent</option>
+        <option value="Retailer">Retailer</option>
+      </select>
+
+      <input type="text" id="lapu" placeholder="LAPU Number">
+
+      <input type="number" id="contact" placeholder="Contact Number" required>
+
+      <input type="text" id="shopName" placeholder="Shop Name" required>
+
+      <input type="text" id="owner" placeholder="Shop Owner Name" required>
+
+      <input type="text" id="address" placeholder="Manual Address">
+
+      <input type="text" id="area" placeholder="Area / Village">
+
+      <select id="zone" required>
+        <option value="">Select Zone</option>
+        <option value="Patory">Patory</option>
+        <option value="Sarairanjan">Sarairanjan</option>
+      </select>
+
+      <button type="submit">Submit Entry</button>
+
+    </form>
+
+    <div class="success" id="msg"></div>
+
+  </div>
 </div>
 
 <script>
 
-const scriptURL = "PASTE_YOUR_WEB_APP_URL_HERE";
+const scriptURL = "https://script.google.com/macros/s/AKfycbzozJmWYrjrY5JGbV-nekY7iaJ3xcjzL2CVuxA6kvU5UAHnkezYjHrx6Gx6qw4snoVt/exec";
 
 document.getElementById("myForm").addEventListener("submit", function(e){
   e.preventDefault();
@@ -53,11 +113,16 @@ document.getElementById("myForm").addEventListener("submit", function(e){
   navigator.geolocation.getCurrentPosition(function(position){
 
     const data = {
-      name: document.getElementById("name").value,
-      mobile: document.getElementById("mobile").value,
-      amount: document.getElementById("amount").value,
-      lat: position.coords.latitude,
-      long: position.coords.longitude
+      userType: document.getElementById("userType").value,
+      lapu: document.getElementById("lapu").value,
+      contact: document.getElementById("contact").value,
+      shopName: document.getElementById("shopName").value,
+      owner: document.getElementById("owner").value,
+      latitude: position.coords.latitude,
+      longitude: position.coords.longitude,
+      address: document.getElementById("address").value,
+      area: document.getElementById("area").value,
+      zone: document.getElementById("zone").value
     };
 
     fetch(scriptURL, {
@@ -66,13 +131,15 @@ document.getElementById("myForm").addEventListener("submit", function(e){
     })
     .then(res => res.json())
     .then(response => {
-        document.getElementById("msg").innerHTML = "Data Saved Successfully ✅";
-        document.getElementById("myForm").reset();   // 🔥 FORM BLANK HO JAYEGA
+        document.getElementById("msg").innerHTML = "Entry Saved Successfully ✅";
+        document.getElementById("myForm").reset();
     })
-    .catch(err => {
+    .catch(error => {
         document.getElementById("msg").innerHTML = "Error Saving Data ❌";
     });
 
+  }, function(){
+      alert("Location permission allow karo ⚠️");
   });
 
 });
