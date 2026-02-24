@@ -1,104 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Vijay Dairy Distributor</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: Arial;
-      margin: 0;
-      background: #f5f5f5;
-    }
-    .header {
-      background: #e60000;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    .container {
-      padding: 15px;
-    }
-    .card {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      font-size: 15px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background: #e60000;
-      color: white;
-      border: none;
-      font-weight: bold;
-    }
-    button:hover {
-      background: #cc0000;
-    }
-    #msg {
-      margin-top: 10px;
-      text-align: center;
-      font-weight: bold;
-    }
-  </style>
-</head>
-
-<body>
-
-<div class="header">
-  Vijay Dairy Distributor
-</div>
-
-<div class="container">
-  <div class="card">
-    <form id="myForm">
-
-      <select id="userType" required>
-        <option value="">Select Type</option>
-        <option value="Agent">Agent</option>
-        <option value="Retailer">Retailer</option>
-      </select>
-
-      <input type="text" id="lapu" placeholder="LAPU Number">
-
-      <input type="number" id="contact" placeholder="Contact Number" required>
-
-      <input type="text" id="shopName" placeholder="Shop Name" required>
-
-      <input type="text" id="owner" placeholder="Shop Owner Name" required>
-
-      <input type="text" id="address" placeholder="Manual Address">
-
-      <input type="text" id="area" placeholder="Area / Village">
-
-      <select id="zone" required>
-        <option value="">Select Zone</option>
-        <option value="Patory">Patory</option>
-        <option value="Sarairanjan">Sarairanjan</option>
-      </select>
-
-      <button type="button" onclick="getLocation()">Fetch Location</button>
-
-      <button type="submit">Submit Entry</button>
-
-    </form>
-
-    <div id="msg"></div>
-
-  </div>
-</div>
-
 <script>
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbxJ1E4wHPzaDT7yA6-QDlLu60qeTTCKo2cukrm3ZD5NEoeXPs2zruyo3Pziy9gNMIpVGQ/exec";
+const scriptURL = "PASTE_YOUR_WEB_APP_URL_HERE";
 
 let userLatitude = "";
 let userLongitude = "";
@@ -116,37 +18,32 @@ function getLocation(){
 document.getElementById("myForm").addEventListener("submit", function(e){
   e.preventDefault();
 
-  const data = {
-    userType: document.getElementById("userType").value,
-    lapu: document.getElementById("lapu").value,
-    contact: document.getElementById("contact").value,
-    shopName: document.getElementById("shopName").value,
-    owner: document.getElementById("owner").value,
-    latitude: userLatitude,
-    longitude: userLongitude,
-    address: document.getElementById("address").value,
-    area: document.getElementById("area").value,
-    zone: document.getElementById("zone").value
-  };
+  let formData = new FormData();
+  formData.append("userType", document.getElementById("userType").value);
+  formData.append("lapu", document.getElementById("lapu").value);
+  formData.append("contact", document.getElementById("contact").value);
+  formData.append("shopName", document.getElementById("shopName").value);
+  formData.append("owner", document.getElementById("owner").value);
+  formData.append("latitude", userLatitude);
+  formData.append("longitude", userLongitude);
+  formData.append("address", document.getElementById("address").value);
+  formData.append("area", document.getElementById("area").value);
+  formData.append("zone", document.getElementById("zone").value);
 
   fetch(scriptURL, {
     method: "POST",
-    body: JSON.stringify(data)
+    body: formData
   })
-  .then(res => res.json())
-  .then(response => {
+  .then(() => {
       document.getElementById("msg").innerHTML = "Entry Saved Successfully ✅";
       document.getElementById("myForm").reset();
       userLatitude = "";
       userLongitude = "";
   })
-  .catch(error => {
+  .catch(() => {
       document.getElementById("msg").innerHTML = "Error Saving Data ❌";
   });
 
 });
 
 </script>
-
-</body>
-</html>
