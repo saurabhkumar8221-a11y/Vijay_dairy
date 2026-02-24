@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airtel Distributor Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    background:#f4f6f9;
+}
+
+.header{
+    background:linear-gradient(45deg,#d10000,#ff3b3b);
+    color:white;
+    padding:20px;
+    text-align:center;
+    font-weight:600;
+    box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+
+.container{
+    max-width:450px;
+    margin:20px auto;
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+}
+
+label{
+    font-size:14px;
+    font-weight:500;
+}
+
+input, select{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    margin-bottom:15px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    font-size:14px;
+}
+
+input:focus{
+    outline:none;
+    border:1px solid #d10000;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    background:#d10000;
+    color:white;
+    border:none;
+    border-radius:8px;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+    margin-bottom:10px;
+}
+
+button:hover{
+    background:#b00000;
+}
+
+.toggle{
+    display:flex;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.toggle button{
+    flex:1;
+    background:#eee;
+    color:black;
+}
+
+.toggle button.active{
+    background:#d10000;
+    color:white;
+}
+
+.small-text{
+    font-size:12px;
+    color:red;
+    margin-bottom:10px;
+}
+
+.loading{
+    display:none;
+    text-align:center;
+    font-size:13px;
+    color:#d10000;
+    margin-bottom:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    VIJAY DAIRY DISTRIBUTOR<br>
+    AIRTEL ENTRY PANEL
+</div>
+
+<div class="container">
+
+<div class="toggle">
+    <button type="button" id="agentBtn" class="active" onclick="setType('Agent')">Agent</button>
+    <button type="button" id="retailerBtn" onclick="setType('Retailer')">Retailer</button>
+</div>
+
+<input type="hidden" id="userType" value="Agent">
+
+<label>LAPU No (Optional)</label>
+<input type="number" id="lapu">
+
+<label>Contact No *</label>
+<input type="tel" id="contact" maxlength="10">
+
+<label>Shop Name *</label>
+<input type="text" id="shop">
+
+<label>Shop Owner *</label>
+<input type="text" id="owner">
+
+<button type="button" onclick="getLocation()">📍 Get Current Location</button>
+
+<div class="loading" id="loading">Fetching Location...</div>
+<div class="small-text" id="gpsError"></div>
+
+<label>Latitude</label>
+<input type="text" id="lat" readonly>
+
+<label>Longitude</label>
+<input type="text" id="lon" readonly>
+
+<label>Address</label>
+<input type="text" id="address">
+
+<label>Area / Village</label>
+<input type="text" id="area">
+
+<label>Zone *</label>
+<select id="zone">
+<option value="">Select Zone</option>
+<option>Patory</option>
+<option>Sarairanjan</option>
+</select>
+
+<button onclick="submitForm()">SAVE ENTRY</button>
+
+</div>
+
+<script>
+
+function setType(type){
+    document.getElementById("userType").value=type;
+    document.getElementById("agentBtn").classList.remove("active");
+    document.getElementById("retailerBtn").classList.remove("active");
+
+    if(type==="Agent"){
+        document.getElementById("agentBtn").classList.add("active");
+    }else{
+        document.getElementById("retailerBtn").classList.add("active");
+    }
+}
+
+function getLocation(){
+
+    const loading=document.getElementById("loading");
+    const gpsError=document.getElementById("gpsError");
+
+    gpsError.innerText="";
+    loading.style.display="block";
+
+    if (!navigator.geolocation) {
+        loading.style.display="none";
+        gpsError.innerText="Geolocation not supported in this browser.";
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        function(position){
+
+            let lat=position.coords.latitude;
+            let lon=position.coords.longitude;
+
+            document.getElementById("lat").value=lat;
+            document.getElementById("lon").value=lon;
+
+            fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat="+lat+"&lon="+lon)
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display="none";
+
+                document.getElementById("address").value = data.display_name || "";
+
+                if(data.address){
+                    document.getElementById("area").value =
+                        data.address.village ||
+                        data.address.town ||
+                        data.address.city ||
+                        data.address.county ||
+                        "";
+                }
+            })
+            .catch(()=>{
+                loading.style.display="none";
+                gpsError.innerText="Address fetch failed. Fill manually.";
+            });
+
+        },
+        function(error){
+            loading.style.display="none";
+
+            if(error.code === 1){
+                gpsError.innerText="Location permission denied. Please allow location.";
+            }else{
+                gpsError.innerText="Unable to fetch location.";
+            }
+        }
+    );
+}
+
+function submitForm(){
+
+    let contact=document.getElementById("contact").value;
+    let zone=document.getElementById("zone").value;
+
+    if(contact.length!==10){
+        alert("Contact number must be 10 digits");
+        return;
+    }
+
+    if(zone===""){
+        alert("Please select Zone");
+        return;
+    }
+
+    alert("Entry Saved (Backend next step)");
+}
+
+</script>
+
+</body>
+</html>
