@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Live Distributor Coverage</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+body{margin:0;}
+#map{height:100vh;}
+.info{
+position:absolute;
+top:10px;
+left:10px;
+background:white;
+padding:10px;
+border-radius:8px;
+box-shadow:0 0 10px rgba(0,0,0,0.3);
+z-index:1000;
+}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<div class="info">
+<b>Total Coverage Area:</b>
+<div id="coverage">Loading...</div>
+</div>
+
+<script>
+
+const scriptURL = "https://script.google.com/macros/s/AKfycbw0fZpOCTHHUicuNllpPNX6IuyfJ-cU3LCR0VsP1e1Rj9w2YnsCXc2ga1KTXs0IyC71Fg/exec";  // 👈 YAHAN APNA URL DAALO
+
+var map = L.map('map').setView([25.75,85.72],12);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+attribution:'© OpenStreetMap'
+}).addTo(map);
+
+function getColor(zone){
+if(zone=="Patory") return "blue";
+if(zone=="Sarairanjan") return "red";
+return "green";
+}
+
+fetch(scriptURL + "?action=getMapData")
+.then(res=>res.json())
+.then(data=>{
+
+let totalArea = 0;
+let circles = [];
+
+data.forEach(function(row){
+
+let name = row[0];
+let lat = parseFloat(row[1]);
+let lon = parseFloat(row[2]);
+let zone = row[3];
+
+if(!lat || !lon) return;
+
+let marker = L.circleMarker([lat,lon],{
+radius:8,
+color:getColor(zone),
+fillColor:getColor(zone),
+fillOpacity:0.8
+}).addTo(map);
+
+marker.bindPopup("<b>"+name+"</b><br>Zone: "+zone);
+
+let circle = L.circle([lat,lon],{
+radius:1000,
+color:getColor(zone),
+fillOpacity:0.1
+}).addTo(map);
+
+circles.push(circle);
+
+totalArea += 3.14; // 1km radius area approx
+});
+
+let overlapCount = 0;
+
+for(let i=0;i<circles.length;i++){
+for(let j=i+1;j<circles.length;j++){
+if(map.distance(
+circles[i].getLatLng(),
+circles[j].getLatLng()
+) < 2000){
+overlapCount++;
+}
+}
+}
+
+document.getElementById("coverage").innerHTML =
+totalArea.toFixed(2)+" sq km<br>Overlaps: "+overlapCount;
+
+})
+.catch(err=>{
+document.getElementById("coverage").innerHTML="Error Loading Data";
+});
+
+</script>
+
+</body>
+</html>
