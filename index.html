@@ -1,49 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airtel Distributor Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;font-family:'Poppins',sans-serif;background:#f4f6f9;}
+.header{background:linear-gradient(45deg,#d10000,#ff3b3b);color:white;padding:20px;text-align:center;font-weight:600;}
+.container{max-width:450px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+label{font-size:14px;font-weight:500;}
+input,select{width:100%;padding:10px;margin-top:5px;margin-bottom:15px;border-radius:8px;border:1px solid #ccc;font-size:14px;}
+button{width:100%;padding:12px;background:#d10000;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px;}
+button:hover{background:#b00000;}
+.toggle{display:flex;gap:10px;margin-bottom:15px;}
+.toggle button{flex:1;background:#eee;color:black;}
+.toggle button.active{background:#d10000;color:white;}
+.loading{text-align:center;color:#d10000;font-size:13px;display:none;}
+.success{text-align:center;color:green;font-size:14px;}
+.error{text-align:center;color:red;font-size:13px;}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+VIJAY DAIRY DISTRIBUTOR<br>
+AIRTEL ENTRY PANEL
+</div>
+
+<div class="container">
+
+<div class="toggle">
+<button type="button" id="agentBtn" class="active" onclick="setType('Agent')">Agent</button>
+<button type="button" id="retailerBtn" onclick="setType('Retailer')">Retailer</button>
+</div>
+
+<input type="hidden" id="userType" value="Agent">
+
+<label>LAPU No (Optional)</label>
+<input type="number" id="lapu">
+
+<label>Contact No *</label>
+<input type="tel" id="contact" maxlength="10">
+
+<label>Shop Name *</label>
+<input type="text" id="shop">
+
+<label>Shop Owner *</label>
+<input type="text" id="owner">
+
+<button type="button" onclick="getLocation()">📍 Get Current Location</button>
+
+<label>Latitude</label>
+<input type="text" id="lat" readonly>
+
+<label>Longitude</label>
+<input type="text" id="lon" readonly>
+
+<label>Address (Editable)</label>
+<input type="text" id="address">
+
+<label>Area / Village (Editable)</label>
+<input type="text" id="area">
+
+<label>Zone *</label>
+<select id="zone">
+<option value="">Select Zone</option>
+<option>Patory</option>
+<option>Sarairanjan</option>
+</select>
+
+<div class="loading" id="loading">Processing...</div>
+<div class="success" id="successMsg"></div>
+<div class="error" id="errorMsg"></div>
+
+<button onclick="submitForm()">SAVE ENTRY</button>
+
+</div>
+
 <script>
 
 const scriptURL = "https://script.google.com/macros/s/AKfycbwm3M-wEaMvi3mPkrkXqIhOBzWONDySVEJV_-1AqhcwURqTnlO2KSTCcB8TRLiOzjfL/exec";
 
-let userLatitude = "";
-let userLongitude = "";
-
-function getLocation(){
-  navigator.geolocation.getCurrentPosition(function(position){
-      userLatitude = position.coords.latitude;
-      userLongitude = position.coords.longitude;
-      alert("Location Fetched ✅");
-  }, function(){
-      alert("Location Allow karo ⚠️");
-  });
+function setType(type){
+document.getElementById("userType").value=type;
+document.getElementById("agentBtn").classList.remove("active");
+document.getElementById("retailerBtn").classList.remove("active");
+if(type==="Agent"){document.getElementById("agentBtn").classList.add("active");}
+else{document.getElementById("retailerBtn").classList.add("active");}
 }
 
-document.getElementById("myForm").addEventListener("submit", function(e){
-  e.preventDefault();
+function getLocation(){
+if(navigator.geolocation){
+navigator.geolocation.getCurrentPosition(function(position){
+let lat=position.coords.latitude;
+let lon=position.coords.longitude;
+document.getElementById("lat").value=lat;
+document.getElementById("lon").value=lon;
 
-  let formData = new FormData();
-  formData.append("userType", document.getElementById("userType").value);
-  formData.append("lapu", document.getElementById("lapu").value);
-  formData.append("contact", document.getElementById("contact").value);
-  formData.append("shopName", document.getElementById("shopName").value);
-  formData.append("owner", document.getElementById("owner").value);
-  formData.append("latitude", userLatitude);
-  formData.append("longitude", userLongitude);
-  formData.append("address", document.getElementById("address").value);
-  formData.append("area", document.getElementById("area").value);
-  formData.append("zone", document.getElementById("zone").value);
-
-  fetch(scriptURL, {
-    method: "POST",
-    body: formData
-  })
-  .then(() => {
-      document.getElementById("msg").innerHTML = "Entry Saved Successfully ✅";
-      document.getElementById("myForm").reset();
-      userLatitude = "";
-      userLongitude = "";
-  })
-  .catch(() => {
-      document.getElementById("msg").innerHTML = "Error Saving Data ❌";
-  });
-
+fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+.then(res=>res.json())
+.then(data=>{
+document.getElementById("address").value=data.display_name||"";
+document.getElementById("area").value=
+data.address.village||
+data.address.town||
+data.address.city||
+"";
 });
+});
+}else{
+alert("GPS not supported");
+}
+}
+
+function submitForm(){
+
+let loading=document.getElementById("loading");
+let successMsg=document.getElementById("successMsg");
+let errorMsg=document.getElementById("errorMsg");
+
+successMsg.innerHTML="";
+errorMsg.innerHTML="";
+loading.style.display="block";
+
+let data={
+userType:document.getElementById("userType").value,
+lapu:document.getElementById("lapu").value,
+contact:document.getElementById("contact").value,
+shop:document.getElementById("shop").value,
+owner:document.getElementById("owner").value,
+lat:document.getElementById("lat").value,
+lon:document.getElementById("lon").value,
+address:document.getElementById("address").value,
+area:document.getElementById("area").value,
+zone:document.getElementById("zone").value
+};
+
+if(data.contact.length!==10){
+loading.style.display="none";
+alert("Contact number must be 10 digits");
+return;
+}
+
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify(data)
+})
+.then(response=>response.json())
+.then(res=>{
+loading.style.display="none";
+successMsg.innerHTML="✅ Entry Saved Successfully!";
+document.querySelectorAll("input").forEach(input=>input.value="");
+})
+.catch(error=>{
+loading.style.display="none";
+errorMsg.innerHTML="❌ Error saving data.";
+});
+}
 
 </script>
+
+</body>
+</html>
