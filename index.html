@@ -81,14 +81,17 @@ AIRTEL ENTRY PANEL
 
 <script>
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbw0fZpOCTHHUicuNllpPNX6IuyfJ-cU3LCR0VsP1e1Rj9w2YnsCXc2ga1KTXs0IyC71Fg/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbw0fZpOCTHHUicuNllpPNX6IuyfJ-cU3LCR0VsP1e1Rj9w2YnsCXc2ga1KTXs0IyC71Fg/exec"; // 👈 YAHAN APNA URL PASTE KARO
 
 function setType(type){
 document.getElementById("userType").value=type;
 document.getElementById("agentBtn").classList.remove("active");
 document.getElementById("retailerBtn").classList.remove("active");
-if(type==="Agent"){document.getElementById("agentBtn").classList.add("active");}
-else{document.getElementById("retailerBtn").classList.add("active");}
+if(type==="Agent"){
+document.getElementById("agentBtn").classList.add("active");
+}else{
+document.getElementById("retailerBtn").classList.add("active");
+}
 }
 
 function getLocation(){
@@ -152,12 +155,25 @@ body:JSON.stringify(data)
 .then(res=>{
 loading.style.display="none";
 successMsg.innerHTML="✅ Entry Saved Successfully!";
-document.querySelectorAll("input").forEach(input=>input.value="");
+resetForm();
 })
 .catch(error=>{
 loading.style.display="none";
 errorMsg.innerHTML="❌ Error saving data.";
 });
+}
+
+function resetForm(){
+document.getElementById("lapu").value="";
+document.getElementById("contact").value="";
+document.getElementById("shop").value="";
+document.getElementById("owner").value="";
+document.getElementById("lat").value="";
+document.getElementById("lon").value="";
+document.getElementById("address").value="";
+document.getElementById("area").value="";
+document.getElementById("zone").value="";
+setType("Agent");
 }
 
 </script>
