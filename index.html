@@ -1,146 +1,204 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SIM Management Panel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vijay Dairy SIM Panel</title>
+
+<style>
+body{font-family:Arial;padding:20px;background:#f4f4f4}
+h2{text-align:center}
+.section{display:none;background:#fff;padding:15px;border-radius:10px;margin-top:15px}
+input,select,button{width:100%;padding:8px;margin:5px 0}
+button{background:green;color:white;border:none;border-radius:5px}
+.success{color:green;font-weight:bold}
+.nav button{background:#007bff;margin-bottom:10px}
+</style>
 </head>
-<body style="font-family: Arial; padding:20px;">
+<body>
 
-<h2>SIM Management Panel</h2>
+<h2>Vijay Dairy SIM Management</h2>
 
-<!-- SELECT ACTION -->
-<select id="mainSelect" onchange="showForm()">
-  <option value="">Select Option</option>
-  <option value="addUser">Add Retailer / Agent</option>
-  <option value="addStock">Add Distributor Stock</option>
-  <option value="giveSim">Give SIM</option>
+<div class="nav">
+<button onclick="showSection('user')">Add Retailer / Agent</button>
+<button onclick="showSection('stock')">Add Distributor Stock</button>
+<button onclick="showSection('give')">Give SIM</button>
+</div>
+
+<!-- ================= USER SECTION ================= -->
+<div id="user" class="section">
+<h3>Add Retailer / Agent</h3>
+
+<form id="userForm">
+
+<select id="userType">
+<option value="Retailer">Retailer</option>
+<option value="Agent">Agent</option>
 </select>
 
-<hr>
+<input type="text" id="lapu" placeholder="LAPU Number" required>
+<input type="text" id="contact" placeholder="Contact">
+<input type="text" id="shop" placeholder="Shop Name">
+<input type="text" id="owner" placeholder="Owner Name">
 
-<!-- ADD USER -->
-<div id="addUserForm" style="display:none;">
-  <h3>Add Retailer / Agent</h3>
+<button type="button" onclick="getLocation()">📍 Get Location</button>
 
-  <input placeholder="Retailer / Agent" id="userType"><br><br>
-  <input placeholder="LAPU Number" id="lapu"><br><br>
-  <input placeholder="Contact" id="contact"><br><br>
-  <input placeholder="Shop Name" id="shopName"><br><br>
-  <input placeholder="Owner Name" id="owner"><br><br>
-  <input placeholder="Area" id="area"><br><br>
+<input type="text" id="lat" placeholder="Latitude" readonly>
+<input type="text" id="lon" placeholder="Longitude" readonly>
+<input type="text" id="address" placeholder="Full Address">
+<input type="text" id="area" placeholder="Village / Place" readonly>
 
-  <select id="zone">
-    <option value="">Select Zone</option>
-    <option value="Patory">Patory</option>
-    <option value="Sarairanjan">Sarairanjan</option>
-  </select><br><br>
+<select id="zone">
+<option value="">Select Zone</option>
+<option value="Patori">Patori</option>
+<option value="Sarairanjan">Sarairanjan</option>
+</select>
 
-  <button onclick="submitUser()">Submit</button>
+<button type="button" onclick="submitUser()">Save User</button>
+
+</form>
+
+<div id="userMsg" class="success"></div>
 </div>
 
-<!-- ADD STOCK -->
-<div id="addStockForm" style="display:none;">
-  <h3>Add Distributor Stock</h3>
+<!-- ================= STOCK SECTION ================= -->
+<div id="stock" class="section">
+<h3>Add Distributor Stock</h3>
 
-  <input type="number" placeholder="Total SIM Added" id="totalSim"><br><br>
+<form id="stockForm">
+<input type="number" id="stockQty" placeholder="Total SIM Added" required>
+<button type="button" onclick="addStock()">Add Stock</button>
+</form>
 
-  <button onclick="submitStock()">Add Stock</button>
+<div id="stockMsg" class="success"></div>
 </div>
 
-<!-- GIVE SIM -->
-<div id="giveSimForm" style="display:none;">
-  <h3>Give SIM</h3>
+<!-- ================= GIVE SIM SECTION ================= -->
+<div id="give" class="section">
+<h3>Give SIM</h3>
 
-  <input placeholder="LAPU Number" id="giveLapu"><br><br>
-  <input type="number" placeholder="SIM Quantity" id="simQty"><br><br>
+<form id="giveForm">
+<input type="text" id="giveLapu" placeholder="LAPU Number" required>
+<input type="number" id="giveQty" placeholder="SIM Quantity" required>
+<button type="button" onclick="giveSim()">Submit</button>
+</form>
 
-  <button onclick="submitGiveSim()">Give SIM</button>
+<div id="giveMsg" class="success"></div>
 </div>
 
 <script>
 
 const scriptURL = "https://script.google.com/macros/s/AKfycbw0fZpOCTHHUicuNllpPNX6IuyfJ-cU3LCR0VsP1e1Rj9w2YnsCXc2ga1KTXs0IyC71Fg/exec";
 
-function showForm() {
-  document.getElementById("addUserForm").style.display = "none";
-  document.getElementById("addStockForm").style.display = "none";
-  document.getElementById("giveSimForm").style.display = "none";
-
-  let val = document.getElementById("mainSelect").value;
-  if(val) {
-    document.getElementById(val + "Form").style.display = "block";
-  }
+// Show Section
+function showSection(id){
+document.querySelectorAll('.section').forEach(sec=>sec.style.display='none');
+document.getElementById(id).style.display='block';
 }
 
-// ADD USER
-function submitUser() {
-
-  const data = {
-    action: "addUser",
-    userType: document.getElementById("userType").value,
-    lapu: document.getElementById("lapu").value,
-    contact: document.getElementById("contact").value,
-    shopName: document.getElementById("shopName").value,
-    owner: document.getElementById("owner").value,
-    latitude: "",
-    longitude: "",
-    address: "",
-    area: document.getElementById("area").value,
-    zone: document.getElementById("zone").value
-  };
-
-  fetch(scriptURL, {
-    method: "POST",
-    body: JSON.stringify(data)
-  })
-  .then(res => res.text())
-  .then(() => {
-    alert("User Added Successfully");
-    document.getElementById("addUserForm").reset?.();
-    location.reload();
-  });
+// Location
+function getLocation(){
+if(!navigator.geolocation){
+alert("Location not supported");
+return;
 }
 
-// ADD STOCK
-function submitStock() {
+navigator.geolocation.getCurrentPosition(function(position){
 
-  const data = {
-    action: "addStock",
-    totalSim: document.getElementById("totalSim").value
-  };
+let lat=position.coords.latitude;
+let lon=position.coords.longitude;
 
-  fetch(scriptURL, {
-    method: "POST",
-    body: JSON.stringify(data)
-  })
-  .then(res => res.text())
-  .then(() => {
-    alert("Stock Added Successfully");
-    location.reload();
-  });
+document.getElementById("lat").value=lat;
+document.getElementById("lon").value=lon;
+
+fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat="+lat+"&lon="+lon)
+.then(response=>response.json())
+.then(data=>{
+
+document.getElementById("address").value=data.display_name || "";
+
+let village="";
+if(data.address){
+village = data.address.village ||
+data.address.town ||
+data.address.city ||
+data.address.hamlet ||
+data.address.suburb ||
+"";
 }
 
-// GIVE SIM
-function submitGiveSim() {
+document.getElementById("area").value=village;
 
-  const data = {
-    action: "giveSim",
-    lapu: document.getElementById("giveLapu").value,
-    simGiven: document.getElementById("simQty").value
-  };
+});
+});
+}
 
-  fetch(scriptURL, {
-    method: "POST",
-    body: JSON.stringify(data)
-  })
-  .then(res => res.text())
-  .then(() => {
-    alert("SIM Given Successfully");
-    location.reload();
-  });
+// Add User
+function submitUser(){
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+type:"user",
+userType:document.getElementById("userType").value,
+lapu:document.getElementById("lapu").value,
+contact:document.getElementById("contact").value,
+shop:document.getElementById("shop").value,
+owner:document.getElementById("owner").value,
+lat:document.getElementById("lat").value,
+lon:document.getElementById("lon").value,
+address:document.getElementById("address").value,
+area:document.getElementById("area").value,
+zone:document.getElementById("zone").value
+})
+})
+.then(res=>res.json())
+.then(response=>{
+if(response.result==="success"){
+document.getElementById("userMsg").innerHTML="✅ Saved Successfully";
+document.getElementById("userForm").reset();
+setTimeout(()=>{document.getElementById("userMsg").innerHTML="";},2000);
+}
+});
+}
+
+// Add Stock
+function addStock(){
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+type:"addStock",
+quantity:document.getElementById("stockQty").value
+})
+})
+.then(res=>res.json())
+.then(response=>{
+if(response.result==="success"){
+document.getElementById("stockMsg").innerHTML="✅ Stock Added";
+document.getElementById("stockForm").reset();
+setTimeout(()=>{document.getElementById("stockMsg").innerHTML="";},2000);
+}
+});
+}
+
+// Give SIM
+function giveSim(){
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+type:"giveSim",
+lapu:document.getElementById("giveLapu").value,
+quantity:document.getElementById("giveQty").value
+})
+})
+.then(res=>res.json())
+.then(response=>{
+if(response.result==="success"){
+document.getElementById("giveMsg").innerHTML="✅ SIM Given";
+document.getElementById("giveForm").reset();
+setTimeout(()=>{document.getElementById("giveMsg").innerHTML="";},2000);
+}
+});
 }
 
 </script>
-
 </body>
 </html>
