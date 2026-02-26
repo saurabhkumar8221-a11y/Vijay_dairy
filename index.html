@@ -1,112 +1,117 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Distributor Management Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vijay Dairy SIM Panel</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f9;}
-.header{background:#d10000;color:white;padding:18px;text-align:center;font-weight:bold;font-size:18px;}
-.container{max-width:480px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
-.toggle{display:flex;gap:8px;margin-bottom:15px;}
-.toggle button{flex:1;padding:10px;border:none;border-radius:8px;background:#eee;font-weight:bold;}
-.toggle button.active{background:#d10000;color:white;}
-input,select{width:100%;padding:10px;margin-bottom:12px;border-radius:8px;border:1px solid #ccc;}
-button.submit{background:#d10000;color:white;font-weight:bold;}
-.success{text-align:center;color:green;}
-.hidden{display:none;}
+body{font-family:Arial;padding:20px;background:#f4f4f4}
+h2{text-align:center}
+.section{display:none;background:#fff;padding:15px;border-radius:10px;margin-top:15px}
+input,select,button{width:100%;padding:8px;margin:5px 0}
+button{background:green;color:white;border:none;border-radius:5px}
+.success{color:green;font-weight:bold}
+.nav button{background:#007bff;margin-bottom:10px}
 </style>
 </head>
-
 <body>
 
-<div class="header">
-VIJAY DAIRY DISTRIBUTOR PANEL
-</div>
+<h2>Vijay Dairy SIM Management</h2>
 
-<div class="container">
-
-<div class="toggle">
-<button onclick="showSection('user')" id="btnUser" class="active">Add Agent/Retailer</button>
-<button onclick="showSection('stock')" id="btnStock">Add Stock</button>
-<button onclick="showSection('give')" id="btnGive">Give SIM</button>
+<div class="nav">
+<button onclick="showSection('user')">Add Agent / Retailer</button>
+<button onclick="showSection('stock')">Add Distributor Stock</button>
+<button onclick="showSection('give')">Give SIM</button>
 </div>
 
 <!-- ================= USER SECTION ================= -->
-<div id="userSection">
+<div id="user" class="section">
+<h3>Add Agent / Retailer</h3>
 
+<form id="userForm">
 <select id="userType">
-<option value="Agent">Agent</option>
 <option value="Retailer">Retailer</option>
+<option value="Agent">Agent</option>
+<option value="Distributor">Distributor</option>
 </select>
 
-<input type="number" id="lapu" placeholder="LAPU Number">
-<input type="text" id="contact" placeholder="Contact No">
+<input type="text" id="lapu" placeholder="LAPU Number" required>
+<input type="text" id="contact" placeholder="Contact">
 <input type="text" id="shop" placeholder="Shop Name">
 <input type="text" id="owner" placeholder="Owner Name">
+
+<button type="button" onclick="getLocation()">📍 Get Location</button>
+
+<input type="text" id="lat" placeholder="Latitude" readonly>
+<input type="text" id="lon" placeholder="Longitude" readonly>
+<input type="text" id="address" placeholder="Address">
+<input type="text" id="area" placeholder="Area">
 <input type="text" id="zone" placeholder="Zone">
 
-<button class="submit" onclick="saveUser()">SAVE USER</button>
+<button type="button" onclick="submitUser()">Save User</button>
+</form>
 
+<div id="userMsg" class="success"></div>
 </div>
 
 <!-- ================= STOCK SECTION ================= -->
-<div id="stockSection" class="hidden">
+<div id="stock" class="section">
+<h3>Add Distributor Stock</h3>
 
-<input type="number" id="stockQty" placeholder="Enter Quantity">
-<button class="submit" onclick="addStock()">ADD STOCK</button>
+<form id="stockForm">
+<input type="number" id="stockQty" placeholder="Total SIM Added" required>
+<button type="button" onclick="addStock()">Add Stock</button>
+</form>
 
+<div id="stockMsg" class="success"></div>
 </div>
 
-<!-- ================= GIVE SECTION ================= -->
-<div id="giveSection" class="hidden">
+<!-- ================= GIVE SIM SECTION ================= -->
+<div id="give" class="section">
+<h3>Give SIM</h3>
 
-<select id="lapuDropdown">
-<option>Loading LAPU...</option>
-</select>
+<form id="giveForm">
+<input type="text" id="giveLapu" placeholder="LAPU Number" required>
+<input type="number" id="giveQty" placeholder="SIM Quantity" required>
+<button type="button" onclick="giveSim()">Submit</button>
+</form>
 
-<input type="number" id="giveQty" placeholder="Enter Quantity">
-<button class="submit" onclick="giveSim()">GIVE SIM</button>
-
-</div>
-
-<div class="success" id="msg"></div>
-
+<div id="giveMsg" class="success"></div>
 </div>
 
 <script>
 
-const scriptURL="https://script.google.com/macros/s/AKfycbw0fZpOCTHHUicuNllpPNX6IuyfJ-cU3LCR0VsP1e1Rj9w2YnsCXc2ga1KTXs0IyC71Fg/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbw0fZpOCTHHUicuNllpPNX6IuyfJ-cU3LCR0VsP1e1Rj9w2YnsCXc2ga1KTXs0IyC71Fg/exec";
 
-// ===== SECTION SWITCH =====
-function showSection(section){
-
-document.getElementById("userSection").classList.add("hidden");
-document.getElementById("stockSection").classList.add("hidden");
-document.getElementById("giveSection").classList.add("hidden");
-
-document.getElementById("btnUser").classList.remove("active");
-document.getElementById("btnStock").classList.remove("active");
-document.getElementById("btnGive").classList.remove("active");
-
-if(section=="user"){
-document.getElementById("userSection").classList.remove("hidden");
-document.getElementById("btnUser").classList.add("active");
-}
-if(section=="stock"){
-document.getElementById("stockSection").classList.remove("hidden");
-document.getElementById("btnStock").classList.add("active");
-}
-if(section=="give"){
-document.getElementById("giveSection").classList.remove("hidden");
-document.getElementById("btnGive").classList.add("active");
+function showSection(id){
+document.querySelectorAll('.section').forEach(sec=>sec.style.display='none');
+document.getElementById(id).style.display='block';
 }
 
+// ================= LOCATION =================
+function getLocation(){
+if(navigator.geolocation){
+navigator.geolocation.getCurrentPosition(function(position){
+let lat=position.coords.latitude;
+let lon=position.coords.longitude;
+document.getElementById("lat").value=lat;
+document.getElementById("lon").value=lon;
+
+fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+.then(res=>res.json())
+.then(data=>{
+document.getElementById("address").value=data.display_name||"";
+document.getElementById("area").value=
+data.address.village||
+data.address.town||
+data.address.city||"";
+});
+});
+}
 }
 
-// ===== SAVE USER =====
-function saveUser(){
-
+// ================= ADD USER =================
+function submitUser(){
 fetch(scriptURL,{
 method:"POST",
 body:JSON.stringify({
@@ -116,18 +121,25 @@ lapu:document.getElementById("lapu").value,
 contact:document.getElementById("contact").value,
 shop:document.getElementById("shop").value,
 owner:document.getElementById("owner").value,
+lat:document.getElementById("lat").value,
+lon:document.getElementById("lon").value,
+address:document.getElementById("address").value,
+area:document.getElementById("area").value,
 zone:document.getElementById("zone").value
 })
 })
 .then(res=>res.json())
-.then(()=>{
-document.getElementById("msg").innerHTML="✅ User Saved";
+.then(response=>{
+if(response.result==="success"){
+document.getElementById("userMsg").innerHTML="✅ Saved Successfully";
+document.getElementById("userForm").reset();
+setTimeout(()=>{document.getElementById("userMsg").innerHTML="";},2000);
+}
 });
 }
 
-// ===== ADD STOCK =====
+// ================= ADD STOCK =================
 function addStock(){
-
 fetch(scriptURL,{
 method:"POST",
 body:JSON.stringify({
@@ -136,43 +148,35 @@ quantity:document.getElementById("stockQty").value
 })
 })
 .then(res=>res.json())
-.then(()=>{
-document.getElementById("msg").innerHTML="✅ Stock Added";
+.then(response=>{
+if(response.result==="success"){
+document.getElementById("stockMsg").innerHTML="✅ Stock Added";
+document.getElementById("stockForm").reset();
+setTimeout(()=>{document.getElementById("stockMsg").innerHTML="";},2000);
+}
 });
 }
 
-// ===== GIVE SIM =====
+// ================= GIVE SIM =================
 function giveSim(){
-
 fetch(scriptURL,{
 method:"POST",
 body:JSON.stringify({
 type:"giveSim",
-lapu:document.getElementById("lapuDropdown").value,
+lapu:document.getElementById("giveLapu").value,
 quantity:document.getElementById("giveQty").value
 })
 })
 .then(res=>res.json())
-.then(()=>{
-document.getElementById("msg").innerHTML="✅ SIM Given";
+.then(response=>{
+if(response.result==="success"){
+document.getElementById("giveMsg").innerHTML="✅ SIM Given";
+document.getElementById("giveForm").reset();
+setTimeout(()=>{document.getElementById("giveMsg").innerHTML="";},2000);
+}
 });
 }
-
-// ===== LOAD LAPU LIST =====
-function loadLapu(){
-fetch(scriptURL+"?action=getUsers")
-.then(res=>res.json())
-.then(data=>{
-let dropdown=document.getElementById("lapuDropdown");
-dropdown.innerHTML="<option value=''>Select LAPU</option>";
-data.forEach(l=>{
-dropdown.innerHTML+=`<option value="${l}">${l}</option>`;
-});
-});
-}
-loadLapu();
 
 </script>
-
 </body>
 </html>
