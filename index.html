@@ -19,16 +19,17 @@ button{background:green;color:white;border:none;border-radius:5px}
 <h2>Vijay Dairy SIM Management</h2>
 
 <div class="nav">
-<button onclick="showSection('user')">Add Agent / Retailer</button>
+<button onclick="showSection('user')">Add Retailer / Agent</button>
 <button onclick="showSection('stock')">Add Distributor Stock</button>
 <button onclick="showSection('give')">Give SIM</button>
 </div>
 
 <!-- ================= USER SECTION ================= -->
 <div id="user" class="section">
-<h3>Add Agent / Retailer</h3>
+<h3>Add Retailer / Agent</h3>
 
 <form id="userForm">
+
 <select id="userType">
 <option value="Retailer">Retailer</option>
 <option value="Agent">Agent</option>
@@ -44,11 +45,18 @@ button{background:green;color:white;border:none;border-radius:5px}
 
 <input type="text" id="lat" placeholder="Latitude" readonly>
 <input type="text" id="lon" placeholder="Longitude" readonly>
-<input type="text" id="address" placeholder="Address">
-<input type="text" id="area" placeholder="Area">
-<input type="text" id="zone" placeholder="Zone">
+<input type="text" id="address" placeholder="Full Address">
+
+<input type="text" id="area" placeholder="Village / Place" readonly>
+
+<select id="zone">
+<option value="">Select Zone</option>
+<option value="Patori">Patori</option>
+<option value="Sarairanjan">Sarairanjan</option>
+</select>
 
 <button type="button" onclick="submitUser()">Save User</button>
+
 </form>
 
 <div id="userMsg" class="success"></div>
@@ -92,19 +100,29 @@ document.getElementById(id).style.display='block';
 function getLocation(){
 if(navigator.geolocation){
 navigator.geolocation.getCurrentPosition(function(position){
+
 let lat=position.coords.latitude;
 let lon=position.coords.longitude;
+
 document.getElementById("lat").value=lat;
 document.getElementById("lon").value=lon;
 
 fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
 .then(res=>res.json())
 .then(data=>{
+
 document.getElementById("address").value=data.display_name||"";
-document.getElementById("area").value=
-data.address.village||
-data.address.town||
-data.address.city||"";
+
+let village =
+data.address.village ||
+data.address.hamlet ||
+data.address.town ||
+data.address.suburb ||
+data.address.city ||
+"";
+
+document.getElementById("area").value=village;
+
 });
 });
 }
