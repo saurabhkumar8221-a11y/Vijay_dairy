@@ -2,179 +2,175 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Airtel Distributor Panel</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<title>Distributor Management Panel</title>
 
 <style>
-body{margin:0;font-family:'Poppins',sans-serif;background:#f4f6f9;}
-.header{background:linear-gradient(45deg,#d10000,#ff3b3b);color:white;padding:20px;text-align:center;font-weight:600;}
-.container{max-width:450px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
-label{font-size:14px;font-weight:500;}
-input,select{width:100%;padding:10px;margin-top:5px;margin-bottom:15px;border-radius:8px;border:1px solid #ccc;font-size:14px;}
-button{width:100%;padding:12px;background:#d10000;color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px;}
-button:hover{background:#b00000;}
-.toggle{display:flex;gap:10px;margin-bottom:15px;}
-.toggle button{flex:1;background:#eee;color:black;}
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.header{background:#d10000;color:white;padding:18px;text-align:center;font-weight:bold;font-size:18px;}
+.container{max-width:480px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+.toggle{display:flex;gap:8px;margin-bottom:15px;}
+.toggle button{flex:1;padding:10px;border:none;border-radius:8px;background:#eee;font-weight:bold;}
 .toggle button.active{background:#d10000;color:white;}
-.loading{text-align:center;color:#d10000;font-size:13px;display:none;}
-.success{text-align:center;color:green;font-size:14px;}
-.error{text-align:center;color:red;font-size:13px;}
+input,select{width:100%;padding:10px;margin-bottom:12px;border-radius:8px;border:1px solid #ccc;}
+button.submit{background:#d10000;color:white;font-weight:bold;}
+.success{text-align:center;color:green;}
+.hidden{display:none;}
 </style>
 </head>
 
 <body>
 
 <div class="header">
-VIJAY DAIRY DISTRIBUTOR<br>
-AIRTEL ENTRY PANEL
+VIJAY DAIRY DISTRIBUTOR PANEL
 </div>
 
 <div class="container">
 
 <div class="toggle">
-<button type="button" id="agentBtn" class="active" onclick="setType('Agent')">Agent</button>
-<button type="button" id="retailerBtn" onclick="setType('Retailer')">Retailer</button>
+<button onclick="showSection('user')" id="btnUser" class="active">Add Agent/Retailer</button>
+<button onclick="showSection('stock')" id="btnStock">Add Stock</button>
+<button onclick="showSection('give')" id="btnGive">Give SIM</button>
 </div>
 
-<input type="hidden" id="userType" value="Agent">
+<!-- ================= USER SECTION ================= -->
+<div id="userSection">
 
-<label>LAPU No (Optional)</label>
-<input type="number" id="lapu">
-
-<label>Contact No *</label>
-<input type="tel" id="contact" maxlength="10">
-
-<label>Shop Name *</label>
-<input type="text" id="shop">
-
-<label>Shop Owner *</label>
-<input type="text" id="owner">
-
-<button type="button" onclick="getLocation()">📍 Get Current Location</button>
-
-<label>Latitude</label>
-<input type="text" id="lat" readonly>
-
-<label>Longitude</label>
-<input type="text" id="lon" readonly>
-
-<label>Address (Editable)</label>
-<input type="text" id="address">
-
-<label>Area / Village (Editable)</label>
-<input type="text" id="area">
-
-<label>Zone *</label>
-<select id="zone">
-<option value="">Select Zone</option>
-<option>Patory</option>
-<option>Sarairanjan</option>
+<select id="userType">
+<option value="Agent">Agent</option>
+<option value="Retailer">Retailer</option>
 </select>
 
-<div class="loading" id="loading">Processing...</div>
-<div class="success" id="successMsg"></div>
-<div class="error" id="errorMsg"></div>
+<input type="number" id="lapu" placeholder="LAPU Number">
+<input type="text" id="contact" placeholder="Contact No">
+<input type="text" id="shop" placeholder="Shop Name">
+<input type="text" id="owner" placeholder="Owner Name">
+<input type="text" id="zone" placeholder="Zone">
 
-<button onclick="submitForm()">SAVE ENTRY</button>
+<button class="submit" onclick="saveUser()">SAVE USER</button>
+
+</div>
+
+<!-- ================= STOCK SECTION ================= -->
+<div id="stockSection" class="hidden">
+
+<input type="number" id="stockQty" placeholder="Enter Quantity">
+<button class="submit" onclick="addStock()">ADD STOCK</button>
+
+</div>
+
+<!-- ================= GIVE SECTION ================= -->
+<div id="giveSection" class="hidden">
+
+<select id="lapuDropdown">
+<option>Loading LAPU...</option>
+</select>
+
+<input type="number" id="giveQty" placeholder="Enter Quantity">
+<button class="submit" onclick="giveSim()">GIVE SIM</button>
+
+</div>
+
+<div class="success" id="msg"></div>
 
 </div>
 
 <script>
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbw0fZpOCTHHUicuNllpPNX6IuyfJ-cU3LCR0VsP1e1Rj9w2YnsCXc2ga1KTXs0IyC71Fg/exec"; // 👈 YAHAN APNA URL PASTE KARO
+const scriptURL="https://script.google.com/macros/s/AKfycbw0fZpOCTHHUicuNllpPNX6IuyfJ-cU3LCR0VsP1e1Rj9w2YnsCXc2ga1KTXs0IyC71Fg/exec";
 
-function setType(type){
-document.getElementById("userType").value=type;
-document.getElementById("agentBtn").classList.remove("active");
-document.getElementById("retailerBtn").classList.remove("active");
-if(type==="Agent"){
-document.getElementById("agentBtn").classList.add("active");
-}else{
-document.getElementById("retailerBtn").classList.add("active");
-}
-}
+// ===== SECTION SWITCH =====
+function showSection(section){
 
-function getLocation(){
-if(navigator.geolocation){
-navigator.geolocation.getCurrentPosition(function(position){
-let lat=position.coords.latitude;
-let lon=position.coords.longitude;
-document.getElementById("lat").value=lat;
-document.getElementById("lon").value=lon;
+document.getElementById("userSection").classList.add("hidden");
+document.getElementById("stockSection").classList.add("hidden");
+document.getElementById("giveSection").classList.add("hidden");
 
-fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-.then(res=>res.json())
-.then(data=>{
-document.getElementById("address").value=data.display_name||"";
-document.getElementById("area").value=
-data.address.village||
-data.address.town||
-data.address.city||
-"";
-});
-});
-}else{
-alert("GPS not supported");
+document.getElementById("btnUser").classList.remove("active");
+document.getElementById("btnStock").classList.remove("active");
+document.getElementById("btnGive").classList.remove("active");
+
+if(section=="user"){
+document.getElementById("userSection").classList.remove("hidden");
+document.getElementById("btnUser").classList.add("active");
 }
+if(section=="stock"){
+document.getElementById("stockSection").classList.remove("hidden");
+document.getElementById("btnStock").classList.add("active");
+}
+if(section=="give"){
+document.getElementById("giveSection").classList.remove("hidden");
+document.getElementById("btnGive").classList.add("active");
 }
 
-function submitForm(){
+}
 
-let loading=document.getElementById("loading");
-let successMsg=document.getElementById("successMsg");
-let errorMsg=document.getElementById("errorMsg");
+// ===== SAVE USER =====
+function saveUser(){
 
-successMsg.innerHTML="";
-errorMsg.innerHTML="";
-loading.style.display="block";
-
-let data={
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+type:"user",
 userType:document.getElementById("userType").value,
 lapu:document.getElementById("lapu").value,
 contact:document.getElementById("contact").value,
 shop:document.getElementById("shop").value,
 owner:document.getElementById("owner").value,
-lat:document.getElementById("lat").value,
-lon:document.getElementById("lon").value,
-address:document.getElementById("address").value,
-area:document.getElementById("area").value,
 zone:document.getElementById("zone").value
-};
-
-if(data.contact.length!==10){
-loading.style.display="none";
-alert("Contact number must be 10 digits");
-return;
-}
-
-fetch(scriptURL,{
-method:"POST",
-body:JSON.stringify(data)
 })
-.then(response=>response.json())
-.then(res=>{
-loading.style.display="none";
-successMsg.innerHTML="✅ Entry Saved Successfully!";
-resetForm();
 })
-.catch(error=>{
-loading.style.display="none";
-errorMsg.innerHTML="❌ Error saving data.";
+.then(res=>res.json())
+.then(()=>{
+document.getElementById("msg").innerHTML="✅ User Saved";
 });
 }
 
-function resetForm(){
-document.getElementById("lapu").value="";
-document.getElementById("contact").value="";
-document.getElementById("shop").value="";
-document.getElementById("owner").value="";
-document.getElementById("lat").value="";
-document.getElementById("lon").value="";
-document.getElementById("address").value="";
-document.getElementById("area").value="";
-document.getElementById("zone").value="";
-setType("Agent");
+// ===== ADD STOCK =====
+function addStock(){
+
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+type:"addStock",
+quantity:document.getElementById("stockQty").value
+})
+})
+.then(res=>res.json())
+.then(()=>{
+document.getElementById("msg").innerHTML="✅ Stock Added";
+});
 }
+
+// ===== GIVE SIM =====
+function giveSim(){
+
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+type:"giveSim",
+lapu:document.getElementById("lapuDropdown").value,
+quantity:document.getElementById("giveQty").value
+})
+})
+.then(res=>res.json())
+.then(()=>{
+document.getElementById("msg").innerHTML="✅ SIM Given";
+});
+}
+
+// ===== LOAD LAPU LIST =====
+function loadLapu(){
+fetch(scriptURL+"?action=getUsers")
+.then(res=>res.json())
+.then(data=>{
+let dropdown=document.getElementById("lapuDropdown");
+dropdown.innerHTML="<option value=''>Select LAPU</option>";
+data.forEach(l=>{
+dropdown.innerHTML+=`<option value="${l}">${l}</option>`;
+});
+});
+}
+loadLapu();
 
 </script>
 
