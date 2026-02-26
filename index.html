@@ -35,8 +35,14 @@ button{background:green;color:white;border:none;border-radius:5px}
 <option value="Agent">Agent</option>
 </select>
 
-<input type="text" id="lapu" placeholder="LAPU Number" required>
-<input type="text" id="contact" placeholder="Contact">
+<input type="tel" id="lapu" placeholder="LAPU Number (10 Digit)" 
+maxlength="10" required 
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+<input type="tel" id="contact" placeholder="Contact Number (10 Digit)" 
+maxlength="10" required 
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
 <input type="text" id="shop" placeholder="Shop Name">
 <input type="text" id="owner" placeholder="Owner Name">
 
@@ -134,13 +140,27 @@ document.getElementById("area").value=village;
 
 // Add User
 function submitUser(){
+
+let lapu = document.getElementById("lapu").value.trim();
+let contact = document.getElementById("contact").value.trim();
+
+if(!/^[0-9]{10}$/.test(lapu)){
+alert("LAPU Number must be exactly 10 digit numeric");
+return;
+}
+
+if(!/^[0-9]{10}$/.test(contact)){
+alert("Contact Number must be exactly 10 digit numeric");
+return;
+}
+
 fetch(scriptURL,{
 method:"POST",
 body:JSON.stringify({
 type:"user",
 userType:document.getElementById("userType").value,
-lapu:document.getElementById("lapu").value,
-contact:document.getElementById("contact").value,
+lapu:lapu,
+contact:contact,
 shop:document.getElementById("shop").value,
 owner:document.getElementById("owner").value,
 lat:document.getElementById("lat").value,
