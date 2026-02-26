@@ -33,7 +33,6 @@ button{background:green;color:white;border:none;border-radius:5px}
 <select id="userType">
 <option value="Retailer">Retailer</option>
 <option value="Agent">Agent</option>
-<option value="Distributor">Distributor</option>
 </select>
 
 <input type="text" id="lapu" placeholder="LAPU Number" required>
@@ -46,7 +45,6 @@ button{background:green;color:white;border:none;border-radius:5px}
 <input type="text" id="lat" placeholder="Latitude" readonly>
 <input type="text" id="lon" placeholder="Longitude" readonly>
 <input type="text" id="address" placeholder="Full Address">
-
 <input type="text" id="area" placeholder="Village / Place" readonly>
 
 <select id="zone">
@@ -91,14 +89,19 @@ button{background:green;color:white;border:none;border-radius:5px}
 
 const scriptURL = "https://script.google.com/macros/s/AKfycbw0fZpOCTHHUicuNllpPNX6IuyfJ-cU3LCR0VsP1e1Rj9w2YnsCXc2ga1KTXs0IyC71Fg/exec";
 
+// Show Section
 function showSection(id){
 document.querySelectorAll('.section').forEach(sec=>sec.style.display='none');
 document.getElementById(id).style.display='block';
 }
 
-// ================= LOCATION =================
+// Location
 function getLocation(){
-if(navigator.geolocation){
+if(!navigator.geolocation){
+alert("Location not supported");
+return;
+}
+
 navigator.geolocation.getCurrentPosition(function(position){
 
 let lat=position.coords.latitude;
@@ -107,28 +110,29 @@ let lon=position.coords.longitude;
 document.getElementById("lat").value=lat;
 document.getElementById("lon").value=lon;
 
-fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-.then(res=>res.json())
+fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat="+lat+"&lon="+lon)
+.then(response=>response.json())
 .then(data=>{
 
-document.getElementById("address").value=data.display_name||"";
+document.getElementById("address").value=data.display_name || "";
 
-let village =
-data.address.village ||
-data.address.hamlet ||
+let village="";
+if(data.address){
+village = data.address.village ||
 data.address.town ||
-data.address.suburb ||
 data.address.city ||
+data.address.hamlet ||
+data.address.suburb ||
 "";
+}
 
 document.getElementById("area").value=village;
 
 });
 });
 }
-}
 
-// ================= ADD USER =================
+// Add User
 function submitUser(){
 fetch(scriptURL,{
 method:"POST",
@@ -156,7 +160,7 @@ setTimeout(()=>{document.getElementById("userMsg").innerHTML="";},2000);
 });
 }
 
-// ================= ADD STOCK =================
+// Add Stock
 function addStock(){
 fetch(scriptURL,{
 method:"POST",
@@ -175,7 +179,7 @@ setTimeout(()=>{document.getElementById("stockMsg").innerHTML="";},2000);
 });
 }
 
-// ================= GIVE SIM =================
+// Give SIM
 function giveSim(){
 fetch(scriptURL,{
 method:"POST",
