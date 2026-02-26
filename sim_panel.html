@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIM Inventory Panel</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9;}
+.header{background:#d10000;color:white;padding:18px;text-align:center;font-size:18px;font-weight:bold;}
+.container{max-width:420px;margin:20px auto;background:white;padding:20px;border-radius:12px;box-shadow:0 4px 15px rgba(0,0,0,0.1);}
+h3{margin-top:0;color:#d10000;}
+input,select{width:100%;padding:10px;margin-bottom:15px;border-radius:8px;border:1px solid #ccc;}
+button{width:100%;padding:12px;background:#d10000;color:white;border:none;border-radius:8px;font-weight:bold;margin-bottom:10px;}
+button:hover{background:#b00000;}
+.success{text-align:center;color:green;}
+.balanceBox{background:#fceaea;padding:10px;border-radius:8px;text-align:center;font-weight:bold;margin-bottom:15px;}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+SIM INVENTORY PANEL
+</div>
+
+<div class="container">
+
+<div class="balanceBox">
+Distributor Balance: <span id="balance">Loading...</span>
+</div>
+
+<h3>Add Stock</h3>
+<input type="number" id="addQty" placeholder="Enter Quantity">
+<button onclick="addStock()">ADD STOCK</button>
+
+<hr>
+
+<h3>Give SIM to LAPU</h3>
+
+<select id="lapuDropdown">
+<option>Loading LAPU...</option>
+</select>
+
+<input type="number" id="giveQty" placeholder="Enter Quantity">
+
+<button onclick="giveSim()">GIVE SIM</button>
+
+<div class="success" id="msg"></div>
+
+</div>
+
+<script>
+
+const scriptURL = "https://script.google.com/macros/s/AKfycbw0fZpOCTHHUicuNllpPNX6IuyfJ-cU3LCR0VsP1e1Rj9w2YnsCXc2ga1KTXs0IyC71Fg/exec";
+
+
+// ================= LOAD LAPU LIST =================
+function loadLapu(){
+fetch(scriptURL + "?action=getUsers")
+.then(res=>res.json())
+.then(data=>{
+let dropdown=document.getElementById("lapuDropdown");
+dropdown.innerHTML="<option value=''>Select LAPU</option>";
+data.forEach(lapu=>{
+dropdown.innerHTML+=`<option value="${lapu}">${lapu}</option>`;
+});
+});
+}
+
+loadLapu();
+
+
+// ================= ADD STOCK =================
+function addStock(){
+
+let qty=document.getElementById("addQty").value;
+
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+type:"addStock",
+quantity:qty
+})
+})
+.then(res=>res.json())
+.then(()=>{
+document.getElementById("msg").innerHTML="✅ Stock Added";
+document.getElementById("addQty").value="";
+});
+}
+
+
+// ================= GIVE SIM =================
+function giveSim(){
+
+let lapu=document.getElementById("lapuDropdown").value;
+let qty=document.getElementById("giveQty").value;
+
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+type:"giveSim",
+lapu:lapu,
+quantity:qty
+})
+})
+.then(res=>res.json())
+.then(()=>{
+document.getElementById("msg").innerHTML="✅ SIM Given Successfully";
+document.getElementById("giveQty").value="";
+});
+}
+
+</script>
+
+</body>
+</html>
