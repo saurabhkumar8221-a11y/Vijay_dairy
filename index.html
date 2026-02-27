@@ -3,6 +3,7 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vijay Dairy SIM Panel</title>
+
 <style>
 body{font-family:Arial;padding:20px;background:#f4f4f4}
 h2{text-align:center}
@@ -21,91 +22,203 @@ button{background:green;color:white;border:none;border-radius:5px}
 <button onclick="showSection('user')">Add Retailer / Agent</button>
 <button onclick="showSection('stock')">Add Distributor Stock</button>
 <button onclick="showSection('give')">Give SIM</button>
-<button onclick="showSection('mnp')">MNP/PORT Service</button>
 </div>
 
-<!-- ================= MNP/PORT SERVICE ================= -->
-<div id="mnp" class="section">
-<h3>MNP/PORT Service</h3>
-<form id="mnpForm">
+<!-- ================= USER SECTION ================= -->
+<div id="user" class="section">
+<h3>Add Retailer / Agent</h3>
 
-<input type="text" id="agentCode" placeholder="Agent Code" required>
-<input type="text" id="agentName" placeholder="Agent Name" readonly>
-<input type="tel" id="lapu" placeholder="Customer LAPU" maxlength="10" required oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+<form id="userForm">
 
-<select id="operator">
-<option value="JIO">JIO</option>
-<option value="VI">VI</option>
-<option value="BSNL">BSNL</option>
+<select id="userType">
+<option value="Retailer">Retailer</option>
+<option value="Agent">Agent</option>
 </select>
 
-<select id="requestType">
-<option value="Recharge">Recharge</option>
-<option value="MNP Recharge">MNP Recharge</option>
-<option value="New Activation">New Activation</option>
-<option value="Replacement">Replacement</option>
+<input type="tel" id="lapu" placeholder="LAPU Number (10 Digit)" 
+maxlength="10" required 
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+<input type="tel" id="contact" placeholder="Contact Number (10 Digit)" 
+maxlength="10" required 
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+<input type="text" id="shop" placeholder="Shop Name">
+<input type="text" id="owner" placeholder="Owner Name">
+
+<button type="button" onclick="getLocation()">📍 Get Location</button>
+
+<input type="text" id="lat" placeholder="Latitude" readonly>
+<input type="text" id="lon" placeholder="Longitude" readonly>
+<input type="text" id="address" placeholder="Full Address">
+<input type="text" id="area" placeholder="Village / Place" readonly>
+
+<select id="zone">
+<option value="">Select Zone</option>
+<option value="Patori">Patori</option>
+<option value="Sarairanjan">Sarairanjan</option>
 </select>
 
-<input type="tel" id="customerMobile" placeholder="Customer Mobile (Optional)" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-<input type="number" id="amount" placeholder="Amount (Optional)">
-<input type="file" id="image">
+<button type="button" onclick="submitUser()">Save User</button>
 
-<button type="button" onclick="submitMNP()">Submit Service</button>
 </form>
-<div id="mnpMsg" class="success"></div>
+
+<div id="userMsg" class="success"></div>
+</div>
+
+<!-- ================= STOCK SECTION ================= -->
+<div id="stock" class="section">
+<h3>Add Distributor Stock</h3>
+
+<form id="stockForm">
+<input type="number" id="stockQty" placeholder="Total SIM Added" required>
+<button type="button" onclick="addStock()">Add Stock</button>
+</form>
+
+<div id="stockMsg" class="success"></div>
+</div>
+
+<!-- ================= GIVE SIM SECTION ================= -->
+<div id="give" class="section">
+<h3>Give SIM</h3>
+
+<form id="giveForm">
+<input type="text" id="giveLapu" placeholder="LAPU Number" required>
+<input type="number" id="giveQty" placeholder="SIM Quantity" required>
+<button type="button" onclick="giveSim()">Submit</button>
+</form>
+
+<div id="giveMsg" class="success"></div>
 </div>
 
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbxx12HuKYXsryDYSmbWBs-kcCFxknfGhthaHT3ASabcVhRFiqJjdHyLvGRMN_yG_gFIpQ/exec";
 
+const scriptURL = "https://script.google.com/macros/s/AKfycbw_zCVLfJFVv8W6zLwhkr23qcZLgO92ebRmHCjqXRXhpmJ68XYEk1CH1W6aKQRpmwNyCw/exec";
+
+// Show Section
 function showSection(id){
 document.querySelectorAll('.section').forEach(sec=>sec.style.display='none');
 document.getElementById(id).style.display='block';
 }
 
-showSection('user');
+// Location
+function getLocation(){
+if(!navigator.geolocation){
+alert("Location not supported");
+return;
+}
 
-// Auto-fill Agent Name based on Agent Code
-document.getElementById("agentCode").addEventListener("input", function(){
-  let code = this.value.trim();
-  if(code.length == 0){ document.getElementById("agentName").value=""; return; }
-  fetch(scriptURL,{
-    method:"POST",
-    body:JSON.stringify({ type:"fetchAgentName", agentCode: code })
-  }).then(r=>r.json()).then(res=>{
-    if(res.result==="success") document.getElementById("agentName").value = res.agentName;
-    else document.getElementById("agentName").value = "";
-  });
+navigator.geolocation.getCurrentPosition(function(position){
+
+let lat=position.coords.latitude;
+let lon=position.coords.longitude;
+
+document.getElementById("lat").value=lat;
+document.getElementById("lon").value=lon;
+
+fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat="+lat+"&lon="+lon)
+.then(response=>response.json())
+.then(data=>{
+
+document.getElementById("address").value=data.display_name || "";
+
+let village="";
+if(data.address){
+village = data.address.village ||
+data.address.town ||
+data.address.city ||
+data.address.hamlet ||
+data.address.suburb ||
+"";
+}
+
+document.getElementById("area").value=village;
+
 });
+});
+}
 
-function submitMNP(){
-let agentCode=document.getElementById("agentCode").value.trim();
-let lapu=document.getElementById("lapu").value.trim();
-let operator=document.getElementById("operator").value;
-let requestType=document.getElementById("requestType").value;
-let customerMobile=document.getElementById("customerMobile").value.trim();
-let amount=document.getElementById("amount").value;
-let image=document.getElementById("image").files[0]?document.getElementById("image").files[0].name:"";
+// Add User
+function submitUser(){
 
-if(!agentCode || !lapu){ alert("Agent Code and LAPU required"); return; }
+let lapu = document.getElementById("lapu").value.trim();
+let contact = document.getElementById("contact").value.trim();
+
+if(!/^[0-9]{10}$/.test(lapu)){
+alert("LAPU Number must be exactly 10 digit numeric");
+return;
+}
+
+if(!/^[0-9]{10}$/.test(contact)){
+alert("Contact Number must be exactly 10 digit numeric");
+return;
+}
 
 fetch(scriptURL,{
 method:"POST",
 body:JSON.stringify({
-type:"mnp",
-agentCode:agentCode,
+type:"user",
+userType:document.getElementById("userType").value,
 lapu:lapu,
-operator:operator,
-requestType:requestType,
-customerMobile:customerMobile,
-amount:amount,
-image:image
+contact:contact,
+shop:document.getElementById("shop").value,
+owner:document.getElementById("owner").value,
+lat:document.getElementById("lat").value,
+lon:document.getElementById("lon").value,
+address:document.getElementById("address").value,
+area:document.getElementById("area").value,
+zone:document.getElementById("zone").value
 })
-}).then(r=>r.json()).then(res=>{
-if(res.result==="success"){ document.getElementById("mnpMsg").innerHTML="✅ Service Saved"; document.getElementById("mnpForm").reset(); setTimeout(()=>{document.getElementById("mnpMsg").innerHTML="";},2000); }
-else{ alert(res.message); }
+})
+.then(res=>res.json())
+.then(response=>{
+if(response.result==="success"){
+document.getElementById("userMsg").innerHTML="✅ Saved Successfully";
+document.getElementById("userForm").reset();
+setTimeout(()=>{document.getElementById("userMsg").innerHTML="";},2000);
+}
 });
 }
+
+// Add Stock
+function addStock(){
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+type:"addStock",
+quantity:document.getElementById("stockQty").value
+})
+})
+.then(res=>res.json())
+.then(response=>{
+if(response.result==="success"){
+document.getElementById("stockMsg").innerHTML="✅ Stock Added";
+document.getElementById("stockForm").reset();
+setTimeout(()=>{document.getElementById("stockMsg").innerHTML="";},2000);
+}
+});
+}
+
+// Give SIM
+function giveSim(){
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+type:"giveSim",
+lapu:document.getElementById("giveLapu").value,
+quantity:document.getElementById("giveQty").value
+})
+})
+.then(res=>res.json())
+.then(response=>{
+if(response.result==="success"){
+document.getElementById("giveMsg").innerHTML="✅ SIM Given";
+document.getElementById("giveForm").reset();
+setTimeout(()=>{document.getElementById("giveMsg").innerHTML="";},2000);
+}
+});
+}
+
 </script>
 </body>
 </html>
