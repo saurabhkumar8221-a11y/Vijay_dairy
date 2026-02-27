@@ -105,14 +105,25 @@ maxlength="10"
 required
 oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 
-<input type="text" id="operator" placeholder="Operator">
-
-<select id="requestType">
-<option value="New SIM">New SIM</option>
-<option value="MNP">MNP</option>
+<select id="operator" required>
+<option value="">Select Operator</option>
+<option value="JIO">JIO</option>
+<option value="VI">VI</option>
+<option value="BSNL">BSNL</option>
 </select>
 
-<input type="number" id="amount" placeholder="Amount">
+<select id="requestType" required>
+<option value="">Select Request Type</option>
+<option value="Recharge">Recharge</option>
+<option value="MNP Recharge">MNP Recharge</option>
+<option value="New Activation">New Activation</option>
+<option value="Replacement">Replacement</option>
+</select>
+
+<input type="number" id="amount" placeholder="Amount (Optional)">
+
+<label>Upload Image (Optional)</label>
+<input type="file" id="imageFile" accept="image/*">
 
 <button type="button" onclick="submitActivation()">Submit Activation</button>
 
@@ -120,9 +131,6 @@ oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 
 <div id="activationMsg" class="success"></div>
 </div>
-
-<script>
-
 const scriptURL = "https://script.google.com/macros/s/AKfycbw_zCVLfJFVv8W6zLwhkr23qcZLgO92ebRmHCjqXRXhpmJ68XYEk1CH1W6aKQRpmwNyCw/exec";
 
 // Show Section
@@ -262,6 +270,14 @@ alert("Customer Mobile must be 10 digit");
 return;
 }
 
+let fileInput = document.getElementById("imageFile");
+let file = fileInput.files[0];
+
+if(file){
+let reader = new FileReader();
+
+reader.onload = function(){
+
 fetch(scriptURL,{
 method:"POST",
 body:JSON.stringify({
@@ -270,7 +286,8 @@ agentCode:document.getElementById("agentCode").value,
 customerMobile:mobile,
 operator:document.getElementById("operator").value,
 requestType:document.getElementById("requestType").value,
-amount:document.getElementById("amount").value
+amount:document.getElementById("amount").value,
+imageUrl:reader.result
 })
 })
 .then(res=>res.json())
@@ -281,8 +298,34 @@ document.getElementById("activationForm").reset();
 setTimeout(()=>{document.getElementById("activationMsg").innerHTML="";},2000);
 }
 });
+
+};
+
+reader.readAsDataURL(file);
+
+}else{
+
+fetch(scriptURL,{
+method:"POST",
+body:JSON.stringify({
+type:"activation",
+agentCode:document.getElementById("agentCode").value,
+customerMobile:mobile,
+operator:document.getElementById("operator").value,
+requestType:document.getElementById("requestType").value,
+amount:document.getElementById("amount").value,
+imageUrl:""
+})
+})
+.then(res=>res.json())
+.then(response=>{
+if(response.result==="success"){
+document.getElementById("activationMsg").innerHTML="✅ Activation Saved";
+document.getElementById("activationForm").reset();
+setTimeout(()=>{document.getElementById("activationMsg").innerHTML="";},2000);
+}
+});
+
 }
 
-</script>
-</body>
-</html>
+}
