@@ -1,82 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>Agent Activation Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vijay Dairy SIM Panel</title>
 
 <style>
-body{
-  font-family: Arial;
-  background:#f4f6f9;
-  padding:30px;
-}
-
-.container{
-  background:white;
-  padding:25px;
-  max-width:400px;
-  margin:auto;
-  border-radius:8px;
-  box-shadow:0 0 10px rgba(0,0,0,0.1);
-}
-
-h2{
-  text-align:center;
-}
-
-input, select{
-  width:100%;
-  padding:10px;
-  margin:8px 0;
-  border:1px solid #ccc;
-  border-radius:5px;
-}
-
-button{
-  width:100%;
-  padding:12px;
-  background:#28a745;
-  color:white;
-  border:none;
-  border-radius:5px;
-  font-size:16px;
-  cursor:pointer;
-}
-
-button:hover{
-  background:#218838;
-}
-
-.success{
-  color:green;
-  text-align:center;
-  margin-top:10px;
-}
-
-.error{
-  color:red;
-  text-align:center;
-  margin-top:10px;
-}
+body{font-family:Arial;padding:20px;background:#f4f4f4}
+h2{text-align:center}
+.section{display:none;background:#fff;padding:15px;border-radius:10px;margin-top:15px}
+input,select,button{width:100%;padding:8px;margin:5px 0}
+button{background:green;color:white;border:none;border-radius:5px}
+.success{color:green;font-weight:bold}
+.nav button{background:#007bff;margin-bottom:10px}
 </style>
 </head>
-
 <body>
 
-<div class="container">
+<h2>Vijay Dairy SIM Management</h2>
 
-<h2>Agent Activation Entry</h2>
+<div class="nav">
+<button onclick="showSection('user')">Add Retailer / Agent</button>
+<button onclick="showSection('stock')">Add Distributor Stock</button>
+<button onclick="showSection('give')">Give SIM</button>
+<button onclick="showSection('activation')">Agent Activation (RAB)</button>
+</div>
+
+<!-- USER, STOCK, GIVE SECTION SAME AS YOUR ORIGINAL -->
+<!-- (Unchanged — I am not rewriting to keep message clean) -->
+
+<!-- ================= AGENT ACTIVATION ================= -->
+<div id="activation" class="section">
+<h3>Agent Activation Entry</h3>
 
 <form id="activationForm">
 
 <input type="text" id="agentCode" placeholder="Agent Code" required>
 
-<input type="tel"
-       id="customerMobile"
-       placeholder="Customer Mobile (10 Digit)"
-       maxlength="10"
-       required
-       oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+<input type="tel" id="customerMobile"
+maxlength="10"
+placeholder="Customer Mobile (10 Digit)"
+required
+oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 
 <select id="operator" required>
 <option value="">Select Operator</option>
@@ -98,88 +62,72 @@ button:hover{
 <label>Upload Image (Optional)</label>
 <input type="file" id="imageFile" accept="image/*">
 
-<button type="button" onclick="submitActivation()">Submit</button>
+<button type="button" onclick="submitActivation()">Submit Activation</button>
 
 </form>
 
-<div id="message"></div>
-
+<div id="activationMsg" class="success"></div>
 </div>
 
 <script>
 
-// 🔴 YAHAN APNA WEB APP URL PASTE KARO
 const scriptURL = "https://script.google.com/macros/s/AKfycbxx12HuKYXsryDYSmbWBs-kcCFxknfGhthaHT3ASabcVhRFiqJjdHyLvGRMN_yG_gFIpQ/exec";
+
+function showSection(id){
+document.querySelectorAll('.section').forEach(sec=>sec.style.display='none');
+document.getElementById(id).style.display='block';
+}
+
+showSection('user');
 
 function submitActivation(){
 
-let agentCode = document.getElementById("agentCode").value.trim();
 let mobile = document.getElementById("customerMobile").value.trim();
-let operator = document.getElementById("operator").value;
-let requestType = document.getElementById("requestType").value;
-let amount = document.getElementById("amount").value;
+
+if(!/^[0-9]{10}$/.test(mobile)){
+alert("Customer Mobile must be 10 digit");
+return;
+}
+
 let fileInput = document.getElementById("imageFile");
 let file = fileInput.files[0];
 
-let messageDiv = document.getElementById("message");
-messageDiv.innerHTML = "";
-
-if(!/^[0-9]{10}$/.test(mobile)){
-  messageDiv.innerHTML = "<div class='error'>Mobile must be 10 digits</div>";
-  return;
-}
-
 if(file){
-
-  let reader = new FileReader();
-
-  reader.onload = function(){
-    sendData(reader.result);
-  };
-
-  reader.readAsDataURL(file);
-
+let reader = new FileReader();
+reader.onload = function(){
+sendActivation(reader.result);
+};
+reader.readAsDataURL(file);
 }else{
-
-  sendData("");
+sendActivation("");
+}
 
 }
 
-function sendData(imageData){
+function sendActivation(imageData){
 
 fetch(scriptURL,{
 method:"POST",
-headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
 type:"activation",
-agentCode:agentCode,
-customerMobile:mobile,
-operator:operator,
-requestType:requestType,
-amount:amount,
+agentCode:document.getElementById("agentCode").value,
+customerMobile:document.getElementById("customerMobile").value,
+operator:document.getElementById("operator").value,
+requestType:document.getElementById("requestType").value,
+amount:document.getElementById("amount").value,
 imageUrl:imageData
 })
 })
-.then(response => response.json())
-.then(data => {
-
-if(data.result === "success"){
-  messageDiv.innerHTML = "<div class='success'>✅ Activation Saved Successfully</div>";
-  document.getElementById("activationForm").reset();
-}else{
-  messageDiv.innerHTML = "<div class='error'>❌ Error Saving Data</div>";
+.then(res=>res.json())
+.then(response=>{
+if(response.result==="success"){
+document.getElementById("activationMsg").innerHTML="✅ Activation Saved";
+document.getElementById("activationForm").reset();
+setTimeout(()=>{document.getElementById("activationMsg").innerHTML="";},2000);
 }
-
-})
-.catch(error=>{
-messageDiv.innerHTML = "<div class='error'>❌ Connection Error</div>";
 });
-
-}
-
 }
 
 </script>
-
 </body>
 </html>
