@@ -1,84 +1,82 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vijay Dairy SIM Panel</title>
+<meta charset="UTF-8">
+<title>Agent Activation Panel</title>
 
 <style>
-body{font-family:Arial;padding:20px;background:#f4f4f4}
-h2{text-align:center}
-.section{display:none;background:#fff;padding:15px;border-radius:10px;margin-top:15px}
-input,select,button{width:100%;padding:8px;margin:5px 0}
-button{background:green;color:white;border:none;border-radius:5px}
-.success{color:green;font-weight:bold}
-.nav button{background:#007bff;margin-bottom:10px}
+body{
+  font-family: Arial;
+  background:#f4f6f9;
+  padding:30px;
+}
+
+.container{
+  background:white;
+  padding:25px;
+  max-width:400px;
+  margin:auto;
+  border-radius:8px;
+  box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+h2{
+  text-align:center;
+}
+
+input, select{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border:1px solid #ccc;
+  border-radius:5px;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  background:#28a745;
+  color:white;
+  border:none;
+  border-radius:5px;
+  font-size:16px;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#218838;
+}
+
+.success{
+  color:green;
+  text-align:center;
+  margin-top:10px;
+}
+
+.error{
+  color:red;
+  text-align:center;
+  margin-top:10px;
+}
 </style>
 </head>
+
 <body>
 
-<h2>Vijay Dairy SIM Management</h2>
+<div class="container">
 
-<div class="nav">
-<button onclick="showSection('user')">Add Retailer / Agent</button>
-<button onclick="showSection('stock')">Add Distributor Stock</button>
-<button onclick="showSection('give')">Give SIM</button>
-<button onclick="showSection('activation')">Agent Activation (RAB)</button>
-</div>
+<h2>Agent Activation Entry</h2>
 
-<!-- USER SECTION -->
-<div id="user" class="section">
-<h3>Add Retailer / Agent</h3>
-<form id="userForm">
-<select id="userType">
-<option value="Retailer">Retailer</option>
-<option value="Agent">Agent</option>
-</select>
-<input type="tel" id="lapu" placeholder="LAPU Number (10 Digit)" maxlength="10" required oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-<input type="tel" id="contact" placeholder="Contact Number (10 Digit)" maxlength="10" required oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-<input type="text" id="shop" placeholder="Shop Name">
-<input type="text" id="owner" placeholder="Owner Name">
-<button type="button" onclick="getLocation()">📍 Get Location</button>
-<input type="text" id="lat" placeholder="Latitude" readonly>
-<input type="text" id="lon" placeholder="Longitude" readonly>
-<input type="text" id="address" placeholder="Full Address">
-<input type="text" id="area" placeholder="Village / Place" readonly>
-<select id="zone">
-<option value="">Select Zone</option>
-<option value="Patori">Patori</option>
-<option value="Sarairanjan">Sarairanjan</option>
-</select>
-<button type="button" onclick="submitUser()">Save User</button>
-</form>
-<div id="userMsg" class="success"></div>
-</div>
-
-<!-- STOCK SECTION -->
-<div id="stock" class="section">
-<h3>Add Distributor Stock</h3>
-<form id="stockForm">
-<input type="number" id="stockQty" placeholder="Total SIM Added" required>
-<button type="button" onclick="addStock()">Add Stock</button>
-</form>
-<div id="stockMsg" class="success"></div>
-</div>
-
-<!-- GIVE SIM SECTION -->
-<div id="give" class="section">
-<h3>Give SIM</h3>
-<form id="giveForm">
-<input type="text" id="giveLapu" placeholder="LAPU Number" required>
-<input type="number" id="giveQty" placeholder="SIM Quantity" required>
-<button type="button" onclick="giveSim()">Submit</button>
-</form>
-<div id="giveMsg" class="success"></div>
-</div>
-
-<!-- AGENT ACTIVATION SECTION -->
-<div id="activation" class="section">
-<h3>Agent Activation Entry</h3>
 <form id="activationForm">
+
 <input type="text" id="agentCode" placeholder="Agent Code" required>
-<input type="tel" id="customerMobile" placeholder="Customer Mobile (10 Digit)" maxlength="10" required oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+
+<input type="tel"
+       id="customerMobile"
+       placeholder="Customer Mobile (10 Digit)"
+       maxlength="10"
+       required
+       oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 
 <select id="operator" required>
 <option value="">Select Operator</option>
@@ -96,65 +94,92 @@ button{background:green;color:white;border:none;border-radius:5px}
 </select>
 
 <input type="number" id="amount" placeholder="Amount (Optional)">
+
 <label>Upload Image (Optional)</label>
 <input type="file" id="imageFile" accept="image/*">
-<button type="button" onclick="submitActivation()">Submit Activation</button>
+
+<button type="button" onclick="submitActivation()">Submit</button>
+
 </form>
-<div id="activationMsg" class="success"></div>
+
+<div id="message"></div>
+
 </div>
 
 <script>
 
-const scriptURL = "https://script.google.com/macros/s/AKfycbw_zCVLfJFVv8W6zLwhkr23qcZLgO92ebRmHCjqXRXhpmJ68XYEk1CH1W6aKQRpmwNyCw/exec";
-
-function showSection(id){
-document.querySelectorAll('.section').forEach(sec=>sec.style.display='none');
-document.getElementById(id).style.display='block';
-}
-showSection('user');
-
-function submitUser(){ /* same as before */ }
-function addStock(){ /* same as before */ }
-function giveSim(){ /* same as before */ }
+// 🔴 YAHAN APNA WEB APP URL PASTE KARO
+const scriptURL = "https://script.google.com/macros/s/AKfycbxx12HuKYXsryDYSmbWBs-kcCFxknfGhthaHT3ASabcVhRFiqJjdHyLvGRMN_yG_gFIpQ/exec";
 
 function submitActivation(){
-let mobile=document.getElementById("customerMobile").value.trim();
-if(!/^[0-9]{10}$/.test(mobile)){alert("Customer Mobile must be 10 digit");return;}
-let file=document.getElementById("imageFile").files[0];
-if(file){
-let reader=new FileReader();
-reader.onload=function(){
-sendActivation(reader.result);
-};
-reader.readAsDataURL(file);
-}else{
-sendActivation("");
-}
+
+let agentCode = document.getElementById("agentCode").value.trim();
+let mobile = document.getElementById("customerMobile").value.trim();
+let operator = document.getElementById("operator").value;
+let requestType = document.getElementById("requestType").value;
+let amount = document.getElementById("amount").value;
+let fileInput = document.getElementById("imageFile");
+let file = fileInput.files[0];
+
+let messageDiv = document.getElementById("message");
+messageDiv.innerHTML = "";
+
+if(!/^[0-9]{10}$/.test(mobile)){
+  messageDiv.innerHTML = "<div class='error'>Mobile must be 10 digits</div>";
+  return;
 }
 
-function sendActivation(imageData){
+if(file){
+
+  let reader = new FileReader();
+
+  reader.onload = function(){
+    sendData(reader.result);
+  };
+
+  reader.readAsDataURL(file);
+
+}else{
+
+  sendData("");
+
+}
+
+function sendData(imageData){
+
 fetch(scriptURL,{
 method:"POST",
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
 type:"activation",
-agentCode:document.getElementById("agentCode").value,
-customerMobile:document.getElementById("customerMobile").value,
-operator:document.getElementById("operator").value,
-requestType:document.getElementById("requestType").value,
-amount:document.getElementById("amount").value,
+agentCode:agentCode,
+customerMobile:mobile,
+operator:operator,
+requestType:requestType,
+amount:amount,
 imageUrl:imageData
 })
 })
-.then(res=>res.json())
-.then(response=>{
-if(response.result==="success"){
-document.getElementById("activationMsg").innerHTML="✅ Activation Saved";
-document.getElementById("activationForm").reset();
-setTimeout(()=>{document.getElementById("activationMsg").innerHTML="";},2000);
+.then(response => response.json())
+.then(data => {
+
+if(data.result === "success"){
+  messageDiv.innerHTML = "<div class='success'>✅ Activation Saved Successfully</div>";
+  document.getElementById("activationForm").reset();
+}else{
+  messageDiv.innerHTML = "<div class='error'>❌ Error Saving Data</div>";
 }
+
+})
+.catch(error=>{
+messageDiv.innerHTML = "<div class='error'>❌ Connection Error</div>";
 });
+
+}
+
 }
 
 </script>
+
 </body>
 </html>
