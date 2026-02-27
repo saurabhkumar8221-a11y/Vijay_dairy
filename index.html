@@ -1,232 +1,106 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SIM Management Panel</title>
-
+<title>Full System</title>
 <style>
-body {font-family: Arial; margin:0; background:#f2f2f2;}
-.tab {display:flex; overflow:auto; background:#111;}
-.tab button {
-  flex:1;
-  padding:14px;
-  color:white;
-  background:#111;
-  border:none;
-  cursor:pointer;
-}
-.tab button.active {background:#28a745;}
-.section {display:none; padding:15px;}
-input, select {
-  width:100%;
-  padding:10px;
-  margin-bottom:10px;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-button.submit {
-  background:#28a745;
-  color:white;
-  padding:12px;
-  border:none;
-  border-radius:6px;
-  width:100%;
-}
-.message{font-weight:bold;margin-top:8px;}
+body {font-family: Arial; padding:20px;}
+input, select {width:100%; padding:8px; margin:5px 0;}
+button {padding:10px; background:green; color:white; border:none; cursor:pointer;}
+.success {color:green; font-weight:bold;}
+.error {color:red; font-weight:bold;}
+hr{margin:20px 0;}
 </style>
 </head>
-
 <body>
 
-<div class="tab">
-  <button onclick="openTab('user')">User</button>
-  <button onclick="openTab('stock')">Distributor Stock</button>
-  <button onclick="openTab('sim')">SIM Transfer</button>
-  <button onclick="openTab('activation')">MNP / Service</button>
-  <button onclick="openTab('map')">Area Map</button>
-  <button onclick="openTab('report')">Dashboard</button>
-</div>
-
-<!-- USER -->
-<div id="user" class="section">
 <h2>User Registration</h2>
 
 <select id="userType">
-<option value="">Select User Type</option>
 <option value="Agent">Agent</option>
 <option value="Retailer">Retailer</option>
 </select>
 
-<input type="tel" id="lapu" placeholder="LAPU (10 Digit)" maxlength="10">
-<input type="tel" id="contact" placeholder="Contact (10 Digit)" maxlength="10">
-<input type="text" id="shopName" placeholder="Shop Name">
-<input type="text" id="owner" placeholder="Owner Name">
-<input type="text" id="zone" placeholder="Zone (Required)">
+<input id="lapu" placeholder="LAPU Number">
+<input id="contact" placeholder="Contact Number">
+<input id="shopName" placeholder="Shop Name">
+<input id="owner" placeholder="Owner Name">
+<input id="address" placeholder="Address">
+<input id="area" placeholder="Area">
+<input id="village" placeholder="Village">
+<input id="zone" placeholder="Zone">
+<input id="latitude" placeholder="Latitude">
+<input id="longitude" placeholder="Longitude">
 
-<button class="submit" onclick="saveUser()">Save User</button>
-<div id="userMsg" class="message"></div>
-</div>
+<button onclick="saveUser()">Save User</button>
 
-<!-- DISTRIBUTOR STOCK -->
-<div id="stock" class="section">
-<h2>Add Distributor Stock</h2>
-<input type="number" id="stockQty" placeholder="Add SIM Quantity">
-<button class="submit" onclick="addStock()">Add Stock</button>
-<div id="stockMsg" class="message"></div>
-</div>
+<hr>
 
-<!-- SIM TRANSFER -->
-<div id="sim" class="section">
-<h2>SIM Transfer</h2>
-<input type="text" id="simLapu" placeholder="Distributor LAPU">
-<input type="text" id="simAgentCode" placeholder="Agent Code">
-<input type="number" id="simQty" placeholder="SIM Quantity">
+<h2>Distributor Stock</h2>
 
-<select id="transactionType">
-<option value="ADD">ADD</option>
-<option value="GIVEN">GIVEN</option>
-</select>
+<input id="distName" placeholder="Distributor Name">
+<input id="simType" placeholder="SIM Type">
+<input id="simQty" placeholder="Quantity">
+<input id="remark" placeholder="Remark">
 
-<button class="submit" onclick="saveSim()">Save Transfer</button>
-<div id="simMsg" class="message"></div>
-</div>
+<button onclick="saveStock()">Save Stock</button>
 
-<!-- ACTIVATION -->
-<div id="activation" class="section">
-<h2>MNP / Service</h2>
+<hr>
 
-<input type="text" id="actAgentCode" placeholder="Agent Code">
-<input type="tel" id="customerMobile" placeholder="Customer Mobile (10 Digit)" maxlength="10">
-
-<select id="operator">
-<option value="JIO">JIO</option>
-<option value="VI">VI</option>
-<option value="BSNL">BSNL</option>
-</select>
-
-<select id="requestType">
-<option value="Recharge">Recharge</option>
-<option value="FRC">FRC</option>
-<option value="New Activation">New Activation</option>
-<option value="Replacement">Replacement</option>
-</select>
-
-<input type="number" id="amount" placeholder="Amount (Optional)">
-
-<button class="submit" onclick="saveActivation()">Submit</button>
-<div id="actMsg" class="message"></div>
-</div>
-
-<!-- MAP -->
-<div id="map" class="section">
-<h2>Area Map</h2>
-<p>Retailer locations will show here later</p>
-</div>
-
-<!-- DASHBOARD -->
-<div id="report" class="section">
-<h2>Dashboard</h2>
-<p>Reports & stock summary here</p>
-</div>
+<h3 id="msg"></h3>
 
 <script>
 
-var scriptURL="https://script.google.com/macros/s/AKfycbzl0ouM0W3I14HO361ybu0Y5SSZXrOWnk6zzAfLZbUCKLxQ94TV_vdlcQNqmU3eTphTKQ/exec";
+const url = "https://script.google.com/macros/s/AKfycbzl0ouM0W3I14HO361ybu0Y5SSZXrOWnk6zzAfLZbUCKLxQ94TV_vdlcQNqmU3eTphTKQ/exec";
 
-function openTab(tabName){
-var sections=document.getElementsByClassName("section");
-for(var i=0;i<sections.length;i++){sections[i].style.display="none";}
-document.getElementById(tabName).style.display="block";
+function postData(data){
+  fetch(url,{
+    method:"POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(res => {
+    let m = document.getElementById("msg");
+
+    if(res.status === "success"){
+      m.className = "success";
+      m.innerHTML = "✔ " + res.message +
+      (res.agentCode ? "<br>Agent Code: " + res.agentCode : "");
+    } else {
+      m.className = "error";
+      m.innerHTML = "✖ " + res.message;
+    }
+  })
+  .catch(err => {
+    document.getElementById("msg").innerHTML = "Server Error";
+  });
 }
-openTab("user");
 
 function saveUser(){
-
-var msg=document.getElementById("userMsg");
-msg.innerHTML="Processing...";
-msg.style.color="black";
-
-if(!userType.value){msg.innerHTML="Select User Type";msg.style.color="red";return;}
-if(lapu.value.length!=10){msg.innerHTML="LAPU must be 10 digit";msg.style.color="red";return;}
-if(contact.value.length!=10){msg.innerHTML="Contact must be 10 digit";msg.style.color="red";return;}
-if(!zone.value){msg.innerHTML="Zone required";msg.style.color="red";return;}
-
-navigator.geolocation.getCurrentPosition(function(pos){
-
-var data={
-type:"user",
-userType:userType.value,
-lapu:lapu.value,
-contact:contact.value,
-shopName:shopName.value,
-owner:owner.value,
-latitude:pos.coords.latitude,
-longitude:pos.coords.longitude,
-address:"",
-area:"",
-zone:zone.value
-};
-
-fetch(scriptURL,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify(data)
-})
-.then(res=>res.json())
-.then(response=>{
-if(response.status=="success"){
-msg.innerHTML="✔ User Saved";
-msg.style.color="green";
-if(response.agentCode){
-alert("Your Agent Code: "+response.agentCode);
-}
-}else{
-msg.innerHTML="✖ "+response.message;
-msg.style.color="red";
-}
-})
-.catch(()=>{msg.innerHTML="Server Error";msg.style.color="red";});
-
-},function(){
-msg.innerHTML="Location Permission Required";
-msg.style.color="red";
-});
+  postData({
+    type:"user",
+    userType:userType.value,
+    lapu:lapu.value,
+    contact:contact.value,
+    shopName:shopName.value,
+    owner:owner.value,
+    address:address.value,
+    area:area.value,
+    village:village.value,
+    zone:zone.value,
+    latitude:latitude.value,
+    longitude:longitude.value
+  });
 }
 
-function addStock(){
-var msg=document.getElementById("stockMsg");
-fetch(scriptURL,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({type:"sim",lapu:"",agentCode:"",simGiven:stockQty.value,transactionType:"ADD"})
-})
-.then(res=>res.json())
-.then(r=>{msg.innerHTML=r.message;msg.style.color="green";});
-}
-
-function saveSim(){
-var msg=document.getElementById("simMsg");
-fetch(scriptURL,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({type:"sim",lapu:simLapu.value,agentCode:simAgentCode.value,simGiven:simQty.value,transactionType:transactionType.value})
-})
-.then(res=>res.json())
-.then(r=>{msg.innerHTML=r.message;msg.style.color="green";});
-}
-
-function saveActivation(){
-var msg=document.getElementById("actMsg");
-fetch(scriptURL,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({type:"activation",agentCode:actAgentCode.value,customerMobile:customerMobile.value,operator:operator.value,requestType:requestType.value,amount:amount.value,imageUrl:""})
-})
-.then(res=>res.json())
-.then(r=>{
-if(r.status=="success"){msg.innerHTML="✔ "+r.message;msg.style.color="green";}
-else{msg.innerHTML="✖ "+r.message;msg.style.color="red";}
-});
+function saveStock(){
+  postData({
+    type:"distributorStock",
+    distributorName:distName.value,
+    simType:simType.value,
+    simQuantity:simQty.value,
+    remark:remark.value
+  });
 }
 
 </script>
