@@ -3,161 +3,136 @@
 <head>
   <base target="_top">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f9;
-      padding: 30px;
-    }
+    body { font-family: Arial; margin: 0; background:#f4f6f9; }
 
-    .container {
-      max-width: 500px;
-      background: #fff;
-      padding: 25px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      margin: auto;
+    .navbar { display:flex; background:#007bff; }
+    .navbar button {
+      flex:1; padding:15px; border:none;
+      background:#007bff; color:white;
+      cursor:pointer; font-size:14px;
     }
+    .navbar button:hover { background:#0056b3; }
 
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 15px;
-    }
+    .tab { display:none; padding:20px; }
+    .active { display:block; }
 
     input, select {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
+      width:100%; padding:8px; margin:6px 0;
     }
 
-    button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 10px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
+    button.submit {
+      background:green; color:white;
+      padding:10px; border:none;
+      width:100%; cursor:pointer;
     }
 
-    button:hover {
-      background: #0056b3;
-    }
-
-    .result {
-      margin-top: 15px;
-      text-align: center;
-      font-weight: bold;
-    }
-
-    .success { color: green; }
-    .error { color: red; }
+    h2 { margin-top:0; }
+    .result { margin-top:10px; font-weight:bold; }
 
   </style>
 </head>
 <body>
 
-<div class="container">
+<div class="navbar">
+  <button onclick="openTab('stock')">📦 Distributor Stock</button>
+  <button onclick="openTab('transfer')">🔁 SIM Transfer</button>
+  <button onclick="openTab('activation')">👤 Agent Activation</button>
+</div>
+
+<!-- Distributor Stock -->
+<div id="stock" class="tab active">
+  <h2>Add Distributor Stock</h2>
+  <input type="number" id="distQty" placeholder="Enter Quantity">
+  <button class="submit" onclick="addDistributorStock()">Add Stock</button>
+  <div id="stockResult" class="result"></div>
+</div>
+
+<!-- SIM Transfer -->
+<div id="transfer" class="tab">
+  <h2>Transfer SIM to Agent</h2>
+  <input type="text" id="transferLapu" placeholder="Agent Code">
+  <input type="number" id="transferQty" placeholder="Quantity">
+  <button class="submit" onclick="transferSIM()">Transfer</button>
+  <div id="transferResult" class="result"></div>
+</div>
+
+<!-- Agent Activation -->
+<div id="activation" class="tab">
   <h2>Agent Activation Entry</h2>
 
-  <label>Agent Code</label>
-  <input type="text" id="agentCode" required>
+  <input type="text" id="agentCode" placeholder="Agent Code">
+  <input type="number" id="mobile" placeholder="Customer Mobile">
 
-  <label>Customer Mobile</label>
-  <input type="number" id="mobile" required>
-
-  <label>Operator</label>
   <select id="operator">
-    <option value="JIO">JIO</option>
-    <option value="AIRTEL">AIRTEL</option>
-    <option value="VI">VI</option>
-    <option value="BSNL">BSNL</option>
+    <option>JIO</option>
+    <option>AIRTEL</option>
+    <option>VI</option>
+    <option>BSNL</option>
   </select>
 
-  <label>Request Type</label>
   <select id="requestType">
-    <option value="New Activation">New Activation</option>
-    <option value="MNP">MNP</option>
-    <option value="Replace">Replace</option>
+    <option>New Activation</option>
+    <option>MNP</option>
+    <option>Replace</option>
   </select>
 
-  <label>Amount</label>
-  <input type="number" id="amount">
+  <input type="number" id="amount" placeholder="Amount">
 
-  <label>Upload Image (Optional)</label>
-  <input type="file" id="imageFile">
-
-  <button onclick="submitData()">Submit</button>
-
-  <div class="result" id="result"></div>
+  <button class="submit" onclick="submitActivation()">Submit</button>
+  <div id="activationResult" class="result"></div>
 </div>
 
 <script>
 
-function submitData(){
-
-  var agentCode = document.getElementById("agentCode").value.trim();
-  var mobile = document.getElementById("mobile").value.trim();
-
-  if(agentCode=="" || mobile==""){
-    showResult("Please fill all required fields ❌", "error");
-    return;
+function openTab(tabName){
+  var tabs=document.getElementsByClassName("tab");
+  for(var i=0;i<tabs.length;i++){
+    tabs[i].classList.remove("active");
   }
-
-  var fileInput = document.getElementById("imageFile");
-  var file = fileInput.files[0];
-
-  if(file){
-    var reader = new FileReader();
-    reader.onloadend = function(){
-      sendToServer(reader.result);
-    }
-    reader.readAsDataURL(file);
-  } else {
-    sendToServer("");
-  }
+  document.getElementById(tabName).classList.add("active");
 }
 
-function sendToServer(imageData){
+function addDistributorStock(){
+  var qty=document.getElementById("distQty").value;
+  google.script.run.withSuccessHandler(function(res){
+    document.getElementById("stockResult").innerHTML=res;
+  }).addDistributorStock(qty);
+}
 
-  var data = {
-    agentCode: document.getElementById("agentCode").value,
-    mobile: document.getElementById("mobile").value,
-    operator: document.getElementById("operator").value,
-    requestType: document.getElementById("requestType").value,
-    amount: document.getElementById("amount").value,
-    image: imageData
+function transferSIM(){
+  var lapu=document.getElementById("transferLapu").value;
+  var qty=document.getElementById("transferQty").value;
+  google.script.run.withSuccessHandler(function(res){
+    document.getElementById("transferResult").innerHTML=res;
+  }).transferSIM(lapu,qty);
+}
+
+function submitActivation(){
+
+  var data={
+    agentCode:document.getElementById("agentCode").value,
+    mobile:document.getElementById("mobile").value,
+    operator:document.getElementById("operator").value,
+    requestType:document.getElementById("requestType").value,
+    amount:document.getElementById("amount").value
   };
 
   google.script.run.withSuccessHandler(function(res){
 
     if(res.status=="duplicate"){
-      showResult("Duplicate Entry ❌", "error");
+      document.getElementById("activationResult").innerHTML="Duplicate Entry ❌";
     }
     else if(res.status=="no_stock"){
-      showResult("No Stock Available ❌", "error");
+      document.getElementById("activationResult").innerHTML="No Stock ❌";
+    }
+    else if(res.status=="success"){
+      document.getElementById("activationResult").innerHTML="Success ✅ Remaining: "+res.balance;
     }
     else{
-      showResult("Success ✅ Remaining Stock: "+res.balance, "success");
-      document.querySelector("form")?.reset();
+      document.getElementById("activationResult").innerHTML="Invalid Data ❌";
     }
 
   }).submitActivation(data);
-}
-
-function showResult(message, type){
-  var resultDiv = document.getElementById("result");
-  resultDiv.innerHTML = message;
-  resultDiv.className = "result " + type;
 }
 
 </script>
