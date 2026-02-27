@@ -32,7 +32,7 @@ button.submit {
   border-radius:6px;
   width:100%;
 }
-h2 {margin-top:0;}
+.message{font-weight:bold;margin-top:8px;}
 </style>
 </head>
 
@@ -52,6 +52,7 @@ h2 {margin-top:0;}
 <h2>User Registration</h2>
 
 <select id="userType">
+<option value="">Select User Type</option>
 <option value="Agent">Agent</option>
 <option value="Retailer">Retailer</option>
 </select>
@@ -60,9 +61,10 @@ h2 {margin-top:0;}
 <input type="tel" id="contact" placeholder="Contact (10 Digit)" maxlength="10">
 <input type="text" id="shopName" placeholder="Shop Name">
 <input type="text" id="owner" placeholder="Owner Name">
-<input type="text" id="zone" placeholder="Zone">
+<input type="text" id="zone" placeholder="Zone (Required)">
 
 <button class="submit" onclick="saveUser()">Save User</button>
+<div id="userMsg" class="message"></div>
 </div>
 
 <!-- DISTRIBUTOR STOCK -->
@@ -70,6 +72,7 @@ h2 {margin-top:0;}
 <h2>Add Distributor Stock</h2>
 <input type="number" id="stockQty" placeholder="Add SIM Quantity">
 <button class="submit" onclick="addStock()">Add Stock</button>
+<div id="stockMsg" class="message"></div>
 </div>
 
 <!-- SIM TRANSFER -->
@@ -85,6 +88,7 @@ h2 {margin-top:0;}
 </select>
 
 <button class="submit" onclick="saveSim()">Save Transfer</button>
+<div id="simMsg" class="message"></div>
 </div>
 
 <!-- ACTIVATION -->
@@ -110,12 +114,13 @@ h2 {margin-top:0;}
 <input type="number" id="amount" placeholder="Amount (Optional)">
 
 <button class="submit" onclick="saveActivation()">Submit</button>
+<div id="actMsg" class="message"></div>
 </div>
 
 <!-- MAP -->
 <div id="map" class="section">
 <h2>Area Map</h2>
-<p>Retailer locations will show here (Google Map embed later)</p>
+<p>Retailer locations will show here later</p>
 </div>
 
 <!-- DASHBOARD -->
@@ -126,89 +131,102 @@ h2 {margin-top:0;}
 
 <script>
 
-var scriptURL = "https://script.google.com/macros/s/AKfycbzl0ouM0W3I14HO361ybu0Y5SSZXrOWnk6zzAfLZbUCKLxQ94TV_vdlcQNqmU3eTphTKQ/exec";
+var scriptURL="https://script.google.com/macros/s/AKfycbzl0ouM0W3I14HO361ybu0Y5SSZXrOWnk6zzAfLZbUCKLxQ94TV_vdlcQNqmU3eTphTKQ/exec";
 
-function openTab(tabName) {
-  var i, sections = document.getElementsByClassName("section");
-  for (i = 0; i < sections.length; i++) {
-    sections[i].style.display = "none";
-  }
-  document.getElementById(tabName).style.display = "block";
+function openTab(tabName){
+var sections=document.getElementsByClassName("section");
+for(var i=0;i<sections.length;i++){sections[i].style.display="none";}
+document.getElementById(tabName).style.display="block";
 }
-
 openTab("user");
 
-// USER SAVE
-function saveUser() {
-navigator.geolocation.getCurrentPosition(function(position) {
+function saveUser(){
 
-var data = {
+var msg=document.getElementById("userMsg");
+msg.innerHTML="Processing...";
+msg.style.color="black";
+
+if(!userType.value){msg.innerHTML="Select User Type";msg.style.color="red";return;}
+if(lapu.value.length!=10){msg.innerHTML="LAPU must be 10 digit";msg.style.color="red";return;}
+if(contact.value.length!=10){msg.innerHTML="Contact must be 10 digit";msg.style.color="red";return;}
+if(!zone.value){msg.innerHTML="Zone required";msg.style.color="red";return;}
+
+navigator.geolocation.getCurrentPosition(function(pos){
+
+var data={
 type:"user",
-userType:document.getElementById("userType").value,
-lapu:document.getElementById("lapu").value,
-contact:document.getElementById("contact").value,
-shopName:document.getElementById("shopName").value,
-owner:document.getElementById("owner").value,
-latitude:position.coords.latitude,
-longitude:position.coords.longitude,
+userType:userType.value,
+lapu:lapu.value,
+contact:contact.value,
+shopName:shopName.value,
+owner:owner.value,
+latitude:pos.coords.latitude,
+longitude:pos.coords.longitude,
 address:"",
 area:"",
-zone:document.getElementById("zone").value
+zone:zone.value
 };
 
-fetch(scriptURL,{method:"POST",body:JSON.stringify(data)})
+fetch(scriptURL,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify(data)
+})
 .then(res=>res.json())
 .then(response=>{
-alert(response.message);
+if(response.status=="success"){
+msg.innerHTML="✔ User Saved";
+msg.style.color="green";
 if(response.agentCode){
 alert("Your Agent Code: "+response.agentCode);
 }
-});
+}else{
+msg.innerHTML="✖ "+response.message;
+msg.style.color="red";
+}
+})
+.catch(()=>{msg.innerHTML="Server Error";msg.style.color="red";});
+
+},function(){
+msg.innerHTML="Location Permission Required";
+msg.style.color="red";
 });
 }
 
-// ADD STOCK
 function addStock(){
-var data={
-type:"sim",
-lapu:"",
-agentCode:"",
-simGiven:document.getElementById("stockQty").value,
-transactionType:"ADD"
-};
-fetch(scriptURL,{method:"POST",body:JSON.stringify(data)})
+var msg=document.getElementById("stockMsg");
+fetch(scriptURL,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({type:"sim",lapu:"",agentCode:"",simGiven:stockQty.value,transactionType:"ADD"})
+})
 .then(res=>res.json())
-.then(response=>alert(response.message));
+.then(r=>{msg.innerHTML=r.message;msg.style.color="green";});
 }
 
-// SIM TRANSFER
 function saveSim(){
-var data={
-type:"sim",
-lapu:document.getElementById("simLapu").value,
-agentCode:document.getElementById("simAgentCode").value,
-simGiven:document.getElementById("simQty").value,
-transactionType:document.getElementById("transactionType").value
-};
-fetch(scriptURL,{method:"POST",body:JSON.stringify(data)})
+var msg=document.getElementById("simMsg");
+fetch(scriptURL,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({type:"sim",lapu:simLapu.value,agentCode:simAgentCode.value,simGiven:simQty.value,transactionType:transactionType.value})
+})
 .then(res=>res.json())
-.then(response=>alert(response.message));
+.then(r=>{msg.innerHTML=r.message;msg.style.color="green";});
 }
 
-// ACTIVATION
 function saveActivation(){
-var data={
-type:"activation",
-agentCode:document.getElementById("actAgentCode").value,
-customerMobile:document.getElementById("customerMobile").value,
-operator:document.getElementById("operator").value,
-requestType:document.getElementById("requestType").value,
-amount:document.getElementById("amount").value,
-imageUrl:""
-};
-fetch(scriptURL,{method:"POST",body:JSON.stringify(data)})
+var msg=document.getElementById("actMsg");
+fetch(scriptURL,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({type:"activation",agentCode:actAgentCode.value,customerMobile:customerMobile.value,operator:operator.value,requestType:requestType.value,amount:amount.value,imageUrl:""})
+})
 .then(res=>res.json())
-.then(response=>alert(response.message));
+.then(r=>{
+if(r.status=="success"){msg.innerHTML="✔ "+r.message;msg.style.color="green";}
+else{msg.innerHTML="✖ "+r.message;msg.style.color="red";}
+});
 }
 
 </script>
