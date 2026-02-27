@@ -3,7 +3,6 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vijay Dairy SIM Panel</title>
-
 <style>
 body{font-family:Arial;padding:20px;background:#f4f4f4}
 h2{text-align:center}
@@ -22,55 +21,41 @@ button{background:green;color:white;border:none;border-radius:5px}
 <button onclick="showSection('user')">Add Retailer / Agent</button>
 <button onclick="showSection('stock')">Add Distributor Stock</button>
 <button onclick="showSection('give')">Give SIM</button>
-<button onclick="showSection('activation')">Agent Activation (RAB)</button>
+<button onclick="showSection('mnp')">MNP/PORT Service</button>
 </div>
 
-<!-- USER, STOCK, GIVE SECTION SAME AS YOUR ORIGINAL -->
-<!-- (Unchanged — I am not rewriting to keep message clean) -->
-
-<!-- ================= AGENT ACTIVATION ================= -->
-<div id="activation" class="section">
-<h3>Agent Activation Entry</h3>
-
-<form id="activationForm">
+<!-- ================= MNP/PORT SERVICE ================= -->
+<div id="mnp" class="section">
+<h3>MNP/PORT Service</h3>
+<form id="mnpForm">
 
 <input type="text" id="agentCode" placeholder="Agent Code" required>
+<input type="text" id="agentName" placeholder="Agent Name" readonly>
+<input type="tel" id="lapu" placeholder="Customer LAPU" maxlength="10" required oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 
-<input type="tel" id="customerMobile"
-maxlength="10"
-placeholder="Customer Mobile (10 Digit)"
-required
-oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-
-<select id="operator" required>
-<option value="">Select Operator</option>
+<select id="operator">
 <option value="JIO">JIO</option>
 <option value="VI">VI</option>
 <option value="BSNL">BSNL</option>
 </select>
 
-<select id="requestType" required>
-<option value="">Select Request Type</option>
+<select id="requestType">
 <option value="Recharge">Recharge</option>
 <option value="MNP Recharge">MNP Recharge</option>
 <option value="New Activation">New Activation</option>
 <option value="Replacement">Replacement</option>
 </select>
 
+<input type="tel" id="customerMobile" placeholder="Customer Mobile (Optional)" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
 <input type="number" id="amount" placeholder="Amount (Optional)">
+<input type="file" id="image">
 
-<label>Upload Image (Optional)</label>
-<input type="file" id="imageFile" accept="image/*">
-
-<button type="button" onclick="submitActivation()">Submit Activation</button>
-
+<button type="button" onclick="submitMNP()">Submit Service</button>
 </form>
-
-<div id="activationMsg" class="success"></div>
+<div id="mnpMsg" class="success"></div>
 </div>
 
 <script>
-
 const scriptURL = "https://script.google.com/macros/s/AKfycbxx12HuKYXsryDYSmbWBs-kcCFxknfGhthaHT3ASabcVhRFiqJjdHyLvGRMN_yG_gFIpQ/exec";
 
 function showSection(id){
@@ -80,54 +65,47 @@ document.getElementById(id).style.display='block';
 
 showSection('user');
 
-function submitActivation(){
+// Auto-fill Agent Name based on Agent Code
+document.getElementById("agentCode").addEventListener("input", function(){
+  let code = this.value.trim();
+  if(code.length == 0){ document.getElementById("agentName").value=""; return; }
+  fetch(scriptURL,{
+    method:"POST",
+    body:JSON.stringify({ type:"fetchAgentName", agentCode: code })
+  }).then(r=>r.json()).then(res=>{
+    if(res.result==="success") document.getElementById("agentName").value = res.agentName;
+    else document.getElementById("agentName").value = "";
+  });
+});
 
-let mobile = document.getElementById("customerMobile").value.trim();
+function submitMNP(){
+let agentCode=document.getElementById("agentCode").value.trim();
+let lapu=document.getElementById("lapu").value.trim();
+let operator=document.getElementById("operator").value;
+let requestType=document.getElementById("requestType").value;
+let customerMobile=document.getElementById("customerMobile").value.trim();
+let amount=document.getElementById("amount").value;
+let image=document.getElementById("image").files[0]?document.getElementById("image").files[0].name:"";
 
-if(!/^[0-9]{10}$/.test(mobile)){
-alert("Customer Mobile must be 10 digit");
-return;
-}
-
-let fileInput = document.getElementById("imageFile");
-let file = fileInput.files[0];
-
-if(file){
-let reader = new FileReader();
-reader.onload = function(){
-sendActivation(reader.result);
-};
-reader.readAsDataURL(file);
-}else{
-sendActivation("");
-}
-
-}
-
-function sendActivation(imageData){
+if(!agentCode || !lapu){ alert("Agent Code and LAPU required"); return; }
 
 fetch(scriptURL,{
 method:"POST",
 body:JSON.stringify({
-type:"activation",
-agentCode:document.getElementById("agentCode").value,
-customerMobile:document.getElementById("customerMobile").value,
-operator:document.getElementById("operator").value,
-requestType:document.getElementById("requestType").value,
-amount:document.getElementById("amount").value,
-imageUrl:imageData
+type:"mnp",
+agentCode:agentCode,
+lapu:lapu,
+operator:operator,
+requestType:requestType,
+customerMobile:customerMobile,
+amount:amount,
+image:image
 })
-})
-.then(res=>res.json())
-.then(response=>{
-if(response.result==="success"){
-document.getElementById("activationMsg").innerHTML="✅ Activation Saved";
-document.getElementById("activationForm").reset();
-setTimeout(()=>{document.getElementById("activationMsg").innerHTML="";},2000);
-}
+}).then(r=>r.json()).then(res=>{
+if(res.result==="success"){ document.getElementById("mnpMsg").innerHTML="✅ Service Saved"; document.getElementById("mnpForm").reset(); setTimeout(()=>{document.getElementById("mnpMsg").innerHTML="";},2000); }
+else{ alert(res.message); }
 });
 }
-
 </script>
 </body>
 </html>
