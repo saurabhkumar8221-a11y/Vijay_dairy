@@ -1,224 +1,78 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vijay Dairy SIM Panel</title>
+  <base target="_top">
+  <script>
+    function fetchName() {
+      const code = document.getElementById("agentCode").value;
+      google.script.run.withSuccessHandler(function(name) {
+        document.getElementById("agentName").value = name;
+      }).getAgentName(code);
+    }
 
-<style>
-body{font-family:Arial;padding:20px;background:#f4f4f4}
-h2{text-align:center}
-.section{display:none;background:#fff;padding:15px;border-radius:10px;margin-top:15px}
-input,select,button{width:100%;padding:8px;margin:5px 0}
-button{background:green;color:white;border:none;border-radius:5px}
-.success{color:green;font-weight:bold}
-.nav button{background:#007bff;margin-bottom:10px}
-</style>
+    function submitForm() {
+      const file = document.getElementById("image").files[0];
+      const reader = new FileReader();
+
+      reader.onloadend = function () {
+        const form = {
+          agentCode: document.getElementById("agentCode").value,
+          customerMobile: document.getElementById("customerMobile").value,
+          operator: document.getElementById("operator").value,
+          requestType: document.getElementById("requestType").value,
+          amount: document.getElementById("amount").value,
+          imageBase64: reader.result,
+          imageType: file ? file.type : ""
+        };
+
+        google.script.run.withSuccessHandler(function(res){
+          alert(res);
+          location.reload();
+        }).saveActivation(form);
+      };
+
+      if (file) {
+        reader.readAsDataURL(file);
+      } else {
+        reader.onloadend();
+      }
+    }
+  </script>
 </head>
 <body>
+  <h2>MNP / PORT Service</h2>
 
-<h2>Vijay Dairy SIM Management</h2>
+  Agent Code:<br>
+  <input type="text" id="agentCode" onblur="fetchName()"><br><br>
 
-<div class="nav">
-<button onclick="showSection('user')">Add Retailer / Agent</button>
-<button onclick="showSection('stock')">Add Distributor Stock</button>
-<button onclick="showSection('give')">Give SIM</button>
-</div>
+  Agent Name:<br>
+  <input type="text" id="agentName" readonly><br><br>
 
-<!-- ================= USER SECTION ================= -->
-<div id="user" class="section">
-<h3>Add Retailer / Agent</h3>
+  Customer Mobile:<br>
+  <input type="number" id="customerMobile" maxlength="10"><br><br>
 
-<form id="userForm">
+  Operator:<br>
+  <select id="operator">
+    <option>JIO</option>
+    <option>VI</option>
+    <option>BSNL</option>
+  </select><br><br>
 
-<select id="userType">
-<option value="Retailer">Retailer</option>
-<option value="Agent">Agent</option>
-</select>
+  Request Type:<br>
+  <select id="requestType">
+    <option>Recharge</option>
+    <option>FRC</option>
+    <option>New Activation</option>
+    <option>Replacement</option>
+  </select><br><br>
 
-<input type="tel" id="lapu" placeholder="LAPU Number (10 Digit)" 
-maxlength="10" required 
-oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+  Amount (Optional):<br>
+  <input type="number" id="amount"><br><br>
 
-<input type="tel" id="contact" placeholder="Contact Number (10 Digit)" 
-maxlength="10" required 
-oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+  Upload Image (Optional):<br>
+  <input type="file" id="image"><br><br>
 
-<input type="text" id="shop" placeholder="Shop Name">
-<input type="text" id="owner" placeholder="Owner Name">
+  <button onclick="submitForm()">Submit</button>
 
-<button type="button" onclick="getLocation()">📍 Get Location</button>
-
-<input type="text" id="lat" placeholder="Latitude" readonly>
-<input type="text" id="lon" placeholder="Longitude" readonly>
-<input type="text" id="address" placeholder="Full Address">
-<input type="text" id="area" placeholder="Village / Place" readonly>
-
-<select id="zone">
-<option value="">Select Zone</option>
-<option value="Patori">Patori</option>
-<option value="Sarairanjan">Sarairanjan</option>
-</select>
-
-<button type="button" onclick="submitUser()">Save User</button>
-
-</form>
-
-<div id="userMsg" class="success"></div>
-</div>
-
-<!-- ================= STOCK SECTION ================= -->
-<div id="stock" class="section">
-<h3>Add Distributor Stock</h3>
-
-<form id="stockForm">
-<input type="number" id="stockQty" placeholder="Total SIM Added" required>
-<button type="button" onclick="addStock()">Add Stock</button>
-</form>
-
-<div id="stockMsg" class="success"></div>
-</div>
-
-<!-- ================= GIVE SIM SECTION ================= -->
-<div id="give" class="section">
-<h3>Give SIM</h3>
-
-<form id="giveForm">
-<input type="text" id="giveLapu" placeholder="LAPU Number" required>
-<input type="number" id="giveQty" placeholder="SIM Quantity" required>
-<button type="button" onclick="giveSim()">Submit</button>
-</form>
-
-<div id="giveMsg" class="success"></div>
-</div>
-
-<script>
-
-const scriptURL = "https://script.google.com/macros/s/AKfycbw_zCVLfJFVv8W6zLwhkr23qcZLgO92ebRmHCjqXRXhpmJ68XYEk1CH1W6aKQRpmwNyCw/exec";
-
-// Show Section
-function showSection(id){
-document.querySelectorAll('.section').forEach(sec=>sec.style.display='none');
-document.getElementById(id).style.display='block';
-}
-
-// Location
-function getLocation(){
-if(!navigator.geolocation){
-alert("Location not supported");
-return;
-}
-
-navigator.geolocation.getCurrentPosition(function(position){
-
-let lat=position.coords.latitude;
-let lon=position.coords.longitude;
-
-document.getElementById("lat").value=lat;
-document.getElementById("lon").value=lon;
-
-fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat="+lat+"&lon="+lon)
-.then(response=>response.json())
-.then(data=>{
-
-document.getElementById("address").value=data.display_name || "";
-
-let village="";
-if(data.address){
-village = data.address.village ||
-data.address.town ||
-data.address.city ||
-data.address.hamlet ||
-data.address.suburb ||
-"";
-}
-
-document.getElementById("area").value=village;
-
-});
-});
-}
-
-// Add User
-function submitUser(){
-
-let lapu = document.getElementById("lapu").value.trim();
-let contact = document.getElementById("contact").value.trim();
-
-if(!/^[0-9]{10}$/.test(lapu)){
-alert("LAPU Number must be exactly 10 digit numeric");
-return;
-}
-
-if(!/^[0-9]{10}$/.test(contact)){
-alert("Contact Number must be exactly 10 digit numeric");
-return;
-}
-
-fetch(scriptURL,{
-method:"POST",
-body:JSON.stringify({
-type:"user",
-userType:document.getElementById("userType").value,
-lapu:lapu,
-contact:contact,
-shop:document.getElementById("shop").value,
-owner:document.getElementById("owner").value,
-lat:document.getElementById("lat").value,
-lon:document.getElementById("lon").value,
-address:document.getElementById("address").value,
-area:document.getElementById("area").value,
-zone:document.getElementById("zone").value
-})
-})
-.then(res=>res.json())
-.then(response=>{
-if(response.result==="success"){
-document.getElementById("userMsg").innerHTML="✅ Saved Successfully";
-document.getElementById("userForm").reset();
-setTimeout(()=>{document.getElementById("userMsg").innerHTML="";},2000);
-}
-});
-}
-
-// Add Stock
-function addStock(){
-fetch(scriptURL,{
-method:"POST",
-body:JSON.stringify({
-type:"addStock",
-quantity:document.getElementById("stockQty").value
-})
-})
-.then(res=>res.json())
-.then(response=>{
-if(response.result==="success"){
-document.getElementById("stockMsg").innerHTML="✅ Stock Added";
-document.getElementById("stockForm").reset();
-setTimeout(()=>{document.getElementById("stockMsg").innerHTML="";},2000);
-}
-});
-}
-
-// Give SIM
-function giveSim(){
-fetch(scriptURL,{
-method:"POST",
-body:JSON.stringify({
-type:"giveSim",
-lapu:document.getElementById("giveLapu").value,
-quantity:document.getElementById("giveQty").value
-})
-})
-.then(res=>res.json())
-.then(response=>{
-if(response.result==="success"){
-document.getElementById("giveMsg").innerHTML="✅ SIM Given";
-document.getElementById("giveForm").reset();
-setTimeout(()=>{document.getElementById("giveMsg").innerHTML="";},2000);
-}
-});
-}
-
-</script>
 </body>
 </html>
