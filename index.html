@@ -1,145 +1,216 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>SIM Management Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIM Management Panel</title>
+
 <style>
-body {margin:0;font-family:Arial;background:#f4f6f9;}
-.sidebar{
-  width:230px;height:100vh;background:#111;
-  position:fixed;color:white;padding-top:20px;
+body {font-family: Arial; margin:0; background:#f2f2f2;}
+.tab {display:flex; overflow:auto; background:#111;}
+.tab button {
+  flex:1;
+  padding:14px;
+  color:white;
+  background:#111;
+  border:none;
+  cursor:pointer;
 }
-.sidebar button{
-  display:block;width:100%;padding:15px;
-  border:none;background:none;color:white;
-  text-align:left;cursor:pointer;font-size:14px;
+.tab button.active {background:#28a745;}
+.section {display:none; padding:15px;}
+input, select {
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
-.sidebar button:hover{background:#333;}
-.content{margin-left:230px;padding:25px;}
-.tab{display:none;background:white;padding:20px;border-radius:8px;}
-input,select{padding:8px;width:300px;margin-bottom:10px;}
-button.submit{background:#007bff;color:white;padding:10px 20px;border:none;}
-h2{margin-top:0;}
+button.submit {
+  background:#28a745;
+  color:white;
+  padding:12px;
+  border:none;
+  border-radius:6px;
+  width:100%;
+}
+h2 {margin-top:0;}
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
-<button onclick="showTab('user')">User Registration</button>
-<button onclick="showTab('stock')">Distributor Stock</button>
-<button onclick="showTab('transfer')">SIM Transfer</button>
-<button onclick="showTab('activation')">MNP / PORT Service</button>
-<button onclick="showTab('map')">Area Map</button>
-<button onclick="showTab('report')">Reports</button>
+<div class="tab">
+  <button onclick="openTab('user')">User</button>
+  <button onclick="openTab('stock')">Distributor Stock</button>
+  <button onclick="openTab('sim')">SIM Transfer</button>
+  <button onclick="openTab('activation')">MNP / Service</button>
+  <button onclick="openTab('map')">Area Map</button>
+  <button onclick="openTab('report')">Dashboard</button>
 </div>
 
-<div class="content">
-
-<div id="user" class="tab">
+<!-- USER -->
+<div id="user" class="section">
 <h2>User Registration</h2>
-<select id="userType"><option>Agent</option><option>Retailer</option></select><br>
-<input id="lapu" placeholder="LAPU"><br>
-<input id="contact" placeholder="Contact"><br>
-<input id="shopName" placeholder="Shop Name"><br>
-<input id="owner" placeholder="Owner"><br>
-<select id="zone"><option>Patory</option><option>Sarairanjan</option></select><br>
-<button class="submit" onclick="registerUser()">Submit</button>
+
+<select id="userType">
+<option value="Agent">Agent</option>
+<option value="Retailer">Retailer</option>
+</select>
+
+<input type="tel" id="lapu" placeholder="LAPU (10 Digit)" maxlength="10">
+<input type="tel" id="contact" placeholder="Contact (10 Digit)" maxlength="10">
+<input type="text" id="shopName" placeholder="Shop Name">
+<input type="text" id="owner" placeholder="Owner Name">
+<input type="text" id="zone" placeholder="Zone">
+
+<button class="submit" onclick="saveUser()">Save User</button>
 </div>
 
-<div id="stock" class="tab">
-<h2>Distributor Stock</h2>
-<input id="stockQty" placeholder="Stock Add"><br>
-<button class="submit" onclick="addStock()">Submit</button>
+<!-- DISTRIBUTOR STOCK -->
+<div id="stock" class="section">
+<h2>Add Distributor Stock</h2>
+<input type="number" id="stockQty" placeholder="Add SIM Quantity">
+<button class="submit" onclick="addStock()">Add Stock</button>
 </div>
 
-<div id="transfer" class="tab">
+<!-- SIM TRANSFER -->
+<div id="sim" class="section">
 <h2>SIM Transfer</h2>
-<input id="lapuT" placeholder="LAPU"><br>
-<input id="agentCodeT" placeholder="Agent Code"><br>
-<input id="qty" placeholder="Quantity"><br>
-<button class="submit" onclick="transferSIM()">Submit</button>
+<input type="text" id="simLapu" placeholder="Distributor LAPU">
+<input type="text" id="simAgentCode" placeholder="Agent Code">
+<input type="number" id="simQty" placeholder="SIM Quantity">
+
+<select id="transactionType">
+<option value="ADD">ADD</option>
+<option value="GIVEN">GIVEN</option>
+</select>
+
+<button class="submit" onclick="saveSim()">Save Transfer</button>
 </div>
 
-<div id="activation" class="tab">
-<h2>MNP / PORT Service</h2>
-<input id="agentCodeA" placeholder="Agent Code"><br>
-<input id="mobile" placeholder="Customer Mobile"><br>
+<!-- ACTIVATION -->
+<div id="activation" class="section">
+<h2>MNP / Service</h2>
+
+<input type="text" id="actAgentCode" placeholder="Agent Code">
+<input type="tel" id="customerMobile" placeholder="Customer Mobile (10 Digit)" maxlength="10">
+
 <select id="operator">
-<option>JIO</option><option>VI</option><option>BSNL</option>
-</select><br>
+<option value="JIO">JIO</option>
+<option value="VI">VI</option>
+<option value="BSNL">BSNL</option>
+</select>
+
 <select id="requestType">
-<option>Recharge</option>
-<option>FRC</option>
-<option>New Activation</option>
-<option>Replacement</option>
-</select><br>
-<input id="amount" placeholder="Amount"><br>
-<button class="submit" onclick="activation()">Submit</button>
+<option value="Recharge">Recharge</option>
+<option value="FRC">FRC</option>
+<option value="New Activation">New Activation</option>
+<option value="Replacement">Replacement</option>
+</select>
+
+<input type="number" id="amount" placeholder="Amount (Optional)">
+
+<button class="submit" onclick="saveActivation()">Submit</button>
 </div>
 
-<div id="map" class="tab"><h2>Area Map</h2><p>Coming Soon</p></div>
-<div id="report" class="tab"><h2>Reports</h2><p>Coming Soon</p></div>
+<!-- MAP -->
+<div id="map" class="section">
+<h2>Area Map</h2>
+<p>Retailer locations will show here (Google Map embed later)</p>
+</div>
 
+<!-- DASHBOARD -->
+<div id="report" class="section">
+<h2>Dashboard</h2>
+<p>Reports & stock summary here</p>
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbzl0ouM0W3I14HO361ybu0Y5SSZXrOWnk6zzAfLZbUCKLxQ94TV_vdlcQNqmU3eTphTKQ/exec";
 
-function showTab(id){
-  document.querySelectorAll(".tab").forEach(t=>t.style.display="none");
-  document.getElementById(id).style.display="block";
+var scriptURL = "https://script.google.com/macros/s/AKfycbzl0ouM0W3I14HO361ybu0Y5SSZXrOWnk6zzAfLZbUCKLxQ94TV_vdlcQNqmU3eTphTKQ/exec";
+
+function openTab(tabName) {
+  var i, sections = document.getElementsByClassName("section");
+  for (i = 0; i < sections.length; i++) {
+    sections[i].style.display = "none";
+  }
+  document.getElementById(tabName).style.display = "block";
 }
 
-function postData(data){
-  return fetch(API_URL,{
-    method:"POST",
-    body:JSON.stringify(data)
-  }).then(res=>res.text());
+openTab("user");
+
+// USER SAVE
+function saveUser() {
+navigator.geolocation.getCurrentPosition(function(position) {
+
+var data = {
+type:"user",
+userType:document.getElementById("userType").value,
+lapu:document.getElementById("lapu").value,
+contact:document.getElementById("contact").value,
+shopName:document.getElementById("shopName").value,
+owner:document.getElementById("owner").value,
+latitude:position.coords.latitude,
+longitude:position.coords.longitude,
+address:"",
+area:"",
+zone:document.getElementById("zone").value
+};
+
+fetch(scriptURL,{method:"POST",body:JSON.stringify(data)})
+.then(res=>res.json())
+.then(response=>{
+alert(response.message);
+if(response.agentCode){
+alert("Your Agent Code: "+response.agentCode);
+}
+});
+});
 }
 
-function registerUser(){
-  postData({
-    action:"registerUser",
-    userType:userType.value,
-    lapu:lapu.value,
-    contact:contact.value,
-    shopName:shopName.value,
-    owner:owner.value,
-    lat:"",
-    lng:"",
-    address:"",
-    area:"",
-    zone:zone.value
-  }).then(alert);
-}
-
+// ADD STOCK
 function addStock(){
-  postData({
-    action:"addStock",
-    stock:stockQty.value
-  }).then(alert);
+var data={
+type:"sim",
+lapu:"",
+agentCode:"",
+simGiven:document.getElementById("stockQty").value,
+transactionType:"ADD"
+};
+fetch(scriptURL,{method:"POST",body:JSON.stringify(data)})
+.then(res=>res.json())
+.then(response=>alert(response.message));
 }
 
-function transferSIM(){
-  postData({
-    action:"transferSIM",
-    lapu:lapuT.value,
-    agentCode:agentCodeT.value,
-    qty:qty.value
-  }).then(alert);
+// SIM TRANSFER
+function saveSim(){
+var data={
+type:"sim",
+lapu:document.getElementById("simLapu").value,
+agentCode:document.getElementById("simAgentCode").value,
+simGiven:document.getElementById("simQty").value,
+transactionType:document.getElementById("transactionType").value
+};
+fetch(scriptURL,{method:"POST",body:JSON.stringify(data)})
+.then(res=>res.json())
+.then(response=>alert(response.message));
 }
 
-function activation(){
-  postData({
-    action:"activation",
-    agentCode:agentCodeA.value,
-    mobile:mobile.value,
-    operator:operator.value,
-    requestType:requestType.value,
-    amount:amount.value
-  }).then(alert);
+// ACTIVATION
+function saveActivation(){
+var data={
+type:"activation",
+agentCode:document.getElementById("actAgentCode").value,
+customerMobile:document.getElementById("customerMobile").value,
+operator:document.getElementById("operator").value,
+requestType:document.getElementById("requestType").value,
+amount:document.getElementById("amount").value,
+imageUrl:""
+};
+fetch(scriptURL,{method:"POST",body:JSON.stringify(data)})
+.then(res=>res.json())
+.then(response=>alert(response.message));
 }
+
 </script>
 
 </body>
