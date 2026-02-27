@@ -1,102 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base target="_top">
-  <style>
-    body { font-family: Arial; margin:0; }
-    .sidebar {
-      width: 220px;
-      background:#111;
-      color:white;
-      position: fixed;
-      height:100%;
-      padding-top:20px;
-    }
-    .sidebar button {
-      display:block;
-      width:100%;
-      padding:15px;
-      border:none;
-      background:none;
-      color:white;
-      text-align:left;
-      cursor:pointer;
-    }
-    .sidebar button:hover { background:#333; }
-    .content {
-      margin-left:230px;
-      padding:20px;
-    }
-    .tab { display:none; }
-    input, select { padding:8px; width:300px; margin-bottom:10px; }
-    button.submit { background:green; color:white; padding:10px 20px; }
-  </style>
-
-  <script>
-    function showTab(id) {
-      document.querySelectorAll(".tab").forEach(t => t.style.display="none");
-      document.getElementById(id).style.display="block";
-    }
-
-    function registerUser() {
-      navigator.geolocation.getCurrentPosition(function(pos){
-        const data = {
-          userType: userType.value,
-          lapu: lapu.value,
-          contact: contact.value,
-          shopName: shopName.value,
-          owner: owner.value,
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          address: "",
-          area: "",
-          zone: zone.value
-        };
-        google.script.run.withSuccessHandler(function(code){
-          alert("Registered! Agent Code: " + code);
-        }).registerUser(data);
-      });
-    }
-
-    function addStock() {
-      google.script.run.withSuccessHandler(function(res){
-        alert("Total Stock: "+res);
-      }).addStock({stock:stock.value});
-    }
-
-    function transferSIM() {
-      google.script.run.withSuccessHandler(alert)
-      .transferSIM({lapu:lapuT.value,agentCode:agentCodeT.value,qty:qty.value});
-    }
-
-    function activation() {
-      const file = image.files[0];
-      const reader = new FileReader();
-      reader.onloadend=function(){
-        google.script.run.withSuccessHandler(alert)
-        .saveActivation({
-          agentCode:agentCodeA.value,
-          mobile:mobile.value,
-          operator:operator.value,
-          requestType:requestType.value,
-          amount:amount.value,
-          imageBase64:reader.result,
-          imageType:file?file.type:""
-        });
-      };
-      if(file) reader.readAsDataURL(file); else reader.onloadend();
-    }
-  </script>
+<meta charset="UTF-8">
+<title>SIM Management Dashboard</title>
+<style>
+body {margin:0;font-family:Arial;background:#f4f6f9;}
+.sidebar{
+  width:230px;height:100vh;background:#111;
+  position:fixed;color:white;padding-top:20px;
+}
+.sidebar button{
+  display:block;width:100%;padding:15px;
+  border:none;background:none;color:white;
+  text-align:left;cursor:pointer;font-size:14px;
+}
+.sidebar button:hover{background:#333;}
+.content{margin-left:230px;padding:25px;}
+.tab{display:none;background:white;padding:20px;border-radius:8px;}
+input,select{padding:8px;width:300px;margin-bottom:10px;}
+button.submit{background:#007bff;color:white;padding:10px 20px;border:none;}
+h2{margin-top:0;}
+</style>
 </head>
+
 <body>
 
 <div class="sidebar">
-  <button onclick="showTab('user')">User Registration</button>
-  <button onclick="showTab('stock')">Distributor Stock</button>
-  <button onclick="showTab('transfer')">SIM Transfer</button>
-  <button onclick="showTab('activation')">MNP / PORT Service</button>
-  <button onclick="showTab('map')">Area Map</button>
-  <button onclick="showTab('report')">Reports</button>
+<button onclick="showTab('user')">User Registration</button>
+<button onclick="showTab('stock')">Distributor Stock</button>
+<button onclick="showTab('transfer')">SIM Transfer</button>
+<button onclick="showTab('activation')">MNP / PORT Service</button>
+<button onclick="showTab('map')">Area Map</button>
+<button onclick="showTab('report')">Reports</button>
 </div>
 
 <div class="content">
@@ -114,7 +49,7 @@
 
 <div id="stock" class="tab">
 <h2>Distributor Stock</h2>
-<input id="stock" placeholder="Stock Add"><br>
+<input id="stockQty" placeholder="Stock Add"><br>
 <button class="submit" onclick="addStock()">Submit</button>
 </div>
 
@@ -140,21 +75,72 @@
 <option>Replacement</option>
 </select><br>
 <input id="amount" placeholder="Amount"><br>
-<input type="file" id="image"><br>
 <button class="submit" onclick="activation()">Submit</button>
 </div>
 
-<div id="map" class="tab">
-<h2>Area Map</h2>
-<p>Map Integration Next Step</p>
-</div>
-
-<div id="report" class="tab">
-<h2>Reports Dashboard</h2>
-<p>Dashboard Next Step</p>
-</div>
+<div id="map" class="tab"><h2>Area Map</h2><p>Coming Soon</p></div>
+<div id="report" class="tab"><h2>Reports</h2><p>Coming Soon</p></div>
 
 </div>
+
+<script>
+const API_URL="https://script.google.com/macros/s/AKfycbzl0ouM0W3I14HO361ybu0Y5SSZXrOWnk6zzAfLZbUCKLxQ94TV_vdlcQNqmU3eTphTKQ/exec";
+
+function showTab(id){
+  document.querySelectorAll(".tab").forEach(t=>t.style.display="none");
+  document.getElementById(id).style.display="block";
+}
+
+function postData(data){
+  return fetch(API_URL,{
+    method:"POST",
+    body:JSON.stringify(data)
+  }).then(res=>res.text());
+}
+
+function registerUser(){
+  postData({
+    action:"registerUser",
+    userType:userType.value,
+    lapu:lapu.value,
+    contact:contact.value,
+    shopName:shopName.value,
+    owner:owner.value,
+    lat:"",
+    lng:"",
+    address:"",
+    area:"",
+    zone:zone.value
+  }).then(alert);
+}
+
+function addStock(){
+  postData({
+    action:"addStock",
+    stock:stockQty.value
+  }).then(alert);
+}
+
+function transferSIM(){
+  postData({
+    action:"transferSIM",
+    lapu:lapuT.value,
+    agentCode:agentCodeT.value,
+    qty:qty.value
+  }).then(alert);
+}
+
+function activation(){
+  postData({
+    action:"activation",
+    agentCode:agentCodeA.value,
+    mobile:mobile.value,
+    operator:operator.value,
+    requestType:requestType.value,
+    amount:amount.value
+  }).then(alert);
+}
+</script>
 
 </body>
 </html>
