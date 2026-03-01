@@ -5,7 +5,7 @@
 <style>
 body{font-family:Arial;padding:20px}
 input,select{width:100%;padding:8px;margin:5px 0}
-button{padding:10px;background:green;color:white;border:none}
+button{padding:10px;background:green;color:white;border:none;cursor:pointer}
 .success{color:green;font-weight:bold}
 .error{color:red;font-weight:bold}
 </style>
@@ -15,7 +15,6 @@ button{padding:10px;background:green;color:white;border:none}
 <h2>User Registration</h2>
 
 <select id="userType">
-<option value="">Select Type</option>
 <option value="Retailer">Retailer</option>
 <option value="Agent">Agent</option>
 </select>
@@ -25,25 +24,24 @@ button{padding:10px;background:green;color:white;border:none}
 <input id="shopName" placeholder="Shop Name">
 <input id="owner" placeholder="Owner Name">
 
+<button onclick="getLocation()">Get Location</button>
+
 <input id="latitude" placeholder="Latitude" readonly>
 <input id="longitude" placeholder="Longitude" readonly>
 <input id="address" placeholder="Address">
 <input id="area" placeholder="Village / Area">
 
 <select id="zone">
-<option value="">Select Zone</option>
 <option value="Sarairanjan">Sarairanjan</option>
 <option value="Patory">Patory</option>
 </select>
 
 <select id="remarks">
-<option value="">Select Volume</option>
 <option value="High Volume">High Volume</option>
 <option value="Medium Volume">Medium Volume</option>
 <option value="Low Volume">Low Volume</option>
 </select>
 
-<button onclick="getLocation()">Fetch GPS</button>
 <button onclick="saveUser()">Save User</button>
 
 <h3 id="msg"></h3>
@@ -52,7 +50,7 @@ button{padding:10px;background:green;color:white;border:none}
 
 const url = "https://script.google.com/macros/s/AKfycbyk3IWE3PgtD8EJHbWSSlLfI4CKJ7PiTZ7VtZvZxDbNDPVK7_hY0e3LOhzluUbbN4F3Xg/exec";
 
-// ===== GPS AUTO FETCH =====
+// ===== GPS =====
 function getLocation(){
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(function(position){
@@ -71,7 +69,7 @@ function getLocation(){
   }
 }
 
-// ===== SAVE USER =====
+// ===== SAVE =====
 function saveUser(){
 
   fetch(url,{
