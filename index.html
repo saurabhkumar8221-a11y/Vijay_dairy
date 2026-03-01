@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>User Registration</title>
-<style>
-body{font-family:Arial;padding:20px}
-input,select{width:100%;padding:8px;margin:5px 0}
-button{padding:10px;background:green;color:white;border:none;cursor:pointer}
-.success{color:green;font-weight:bold}
-.error{color:red;font-weight:bold}
-</style>
 </head>
 <body>
 
 <h2>User Registration</h2>
 
 <select id="userType">
-<option value="Retailer">Retailer</option>
-<option value="Agent">Agent</option>
-</select>
+<option value="">Select User Type</option>
+<option>Retailer</option>
+<option>Agent</option>
+</select><br><br>
 
-<input id="lapu" placeholder="LAPU (10 digit)">
-<input id="contact" placeholder="Contact (10 digit)">
-<input id="shopName" placeholder="Shop Name">
-<input id="owner" placeholder="Owner Name">
+<input id="lapu" placeholder="LAPU (10 digit)" maxlength="10"><br><br>
+<input id="contact" placeholder="Contact (10 digit)" maxlength="10"><br><br>
+<input id="shopName" placeholder="Shop Name"><br><br>
+<input id="owner" placeholder="Owner Name"><br><br>
 
-<button onclick="getLocation()">Get Location</button>
+<button onclick="getLocation()">Get Location</button><br><br>
 
-<input id="latitude" placeholder="Latitude" readonly>
-<input id="longitude" placeholder="Longitude" readonly>
-<input id="address" placeholder="Address">
-<input id="area" placeholder="Village / Area">
+<input id="latitude" placeholder="Latitude" readonly><br><br>
+<input id="longitude" placeholder="Longitude" readonly><br><br>
+<input id="address" placeholder="Address" readonly><br><br>
+<input id="area" placeholder="Area"><br><br>
 
 <select id="zone">
-<option value="Sarairanjan">Sarairanjan</option>
-<option value="Patory">Patory</option>
-</select>
+<option value="">Select Zone</option>
+<option>Sarairanjan</option>
+<option>Patory</option>
+</select><br><br>
 
 <select id="remarks">
-<option value="High Volume">High Volume</option>
-<option value="Medium Volume">Medium Volume</option>
-<option value="Low Volume">Low Volume</option>
-</select>
+<option value="">Select Remarks</option>
+<option>High Volume</option>
+<option>Medium Volume</option>
+<option>Low Volume</option>
+</select><br><br>
 
 <button onclick="saveUser()">Save User</button>
 
@@ -50,27 +47,31 @@ button{padding:10px;background:green;color:white;border:none;cursor:pointer}
 
 const url = "https://script.google.com/macros/s/AKfycbyk3IWE3PgtD8EJHbWSSlLfI4CKJ7PiTZ7VtZvZxDbNDPVK7_hY0e3LOhzluUbbN4F3Xg/exec";
 
-// ===== GPS =====
 function getLocation(){
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(function(position){
-      latitude.value = position.coords.latitude;
-      longitude.value = position.coords.longitude;
+  navigator.geolocation.getCurrentPosition(function(pos){
+    latitude.value = pos.coords.latitude;
+    longitude.value = pos.coords.longitude;
 
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
-      .then(res=>res.json())
-      .then(data=>{
-        address.value = data.display_name;
-        area.value = data.address.village || data.address.town || "";
-      });
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude.value}&lon=${longitude.value}`)
+    .then(res=>res.json())
+    .then(data=>{
+      address.value = data.display_name;
+      area.value = data.address.village || data.address.town || data.address.city || "";
     });
-  } else {
-    alert("GPS not supported");
-  }
+  });
 }
 
-// ===== SAVE =====
 function saveUser(){
+
+  if(!/^\d{10}$/.test(lapu.value)){
+    alert("LAPU must be 10 digit number");
+    return;
+  }
+
+  if(!/^\d{10}$/.test(contact.value)){
+    alert("Contact must be 10 digit number");
+    return;
+  }
 
   fetch(url,{
     method:"POST",
@@ -91,15 +92,15 @@ function saveUser(){
   })
   .then(res=>res.json())
   .then(res=>{
-    let m=document.getElementById("msg");
-    if(res.status==="success"){
-      m.className="success";
-      m.innerHTML="✔ "+res.message;
-    }else{
-      m.className="error";
-      m.innerHTML="✖ "+res.message;
+    msg.innerHTML=res.message;
+    if(res.status=="success"){
+      document.querySelectorAll("input").forEach(i=>i.value="");
     }
+  })
+  .catch(err=>{
+    alert("Error saving user");
   });
+
 }
 
 </script>
