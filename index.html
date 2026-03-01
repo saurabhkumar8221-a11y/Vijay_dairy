@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Full System</title>
+<title>User Registration</title>
 <style>
-body {font-family: Arial; padding:20px;}
-input, select {width:100%; padding:8px; margin:5px 0;}
-button {padding:10px; background:green; color:white; border:none; cursor:pointer;}
-.success {color:green; font-weight:bold;}
-.error {color:red; font-weight:bold;}
-hr{margin:20px 0;}
+body{font-family:Arial;padding:20px}
+input,select{width:100%;padding:8px;margin:5px 0}
+button{padding:10px;background:green;color:white;border:none}
+.success{color:green;font-weight:bold}
+.error{color:red;font-weight:bold}
 </style>
 </head>
 <body>
@@ -16,90 +15,92 @@ hr{margin:20px 0;}
 <h2>User Registration</h2>
 
 <select id="userType">
-<option value="Agent">Agent</option>
+<option value="">Select Type</option>
 <option value="Retailer">Retailer</option>
+<option value="Agent">Agent</option>
 </select>
 
-<input id="lapu" placeholder="LAPU Number">
-<input id="contact" placeholder="Contact Number">
+<input id="lapu" placeholder="LAPU (10 digit)">
+<input id="contact" placeholder="Contact (10 digit)">
 <input id="shopName" placeholder="Shop Name">
 <input id="owner" placeholder="Owner Name">
+
+<input id="latitude" placeholder="Latitude" readonly>
+<input id="longitude" placeholder="Longitude" readonly>
 <input id="address" placeholder="Address">
-<input id="area" placeholder="Area">
-<input id="village" placeholder="Village">
-<input id="zone" placeholder="Zone">
-<input id="latitude" placeholder="Latitude">
-<input id="longitude" placeholder="Longitude">
+<input id="area" placeholder="Village / Area">
 
+<select id="zone">
+<option value="">Select Zone</option>
+<option value="Sarairanjan">Sarairanjan</option>
+<option value="Patory">Patory</option>
+</select>
+
+<select id="remarks">
+<option value="">Select Volume</option>
+<option value="High Volume">High Volume</option>
+<option value="Medium Volume">Medium Volume</option>
+<option value="Low Volume">Low Volume</option>
+</select>
+
+<button onclick="getLocation()">Fetch GPS</button>
 <button onclick="saveUser()">Save User</button>
-
-<hr>
-
-<h2>Distributor Stock</h2>
-
-<input id="distName" placeholder="Distributor Name">
-<input id="simType" placeholder="SIM Type">
-<input id="simQty" placeholder="Quantity">
-<input id="remark" placeholder="Remark">
-
-<button onclick="saveStock()">Save Stock</button>
-
-<hr>
 
 <h3 id="msg"></h3>
 
 <script>
 
-const url = "https://script.google.com/macros/s/AKfycbzl0ouM0W3I14HO361ybu0Y5SSZXrOWnk6zzAfLZbUCKLxQ94TV_vdlcQNqmU3eTphTKQ/exec";
+const url = "https://script.google.com/macros/s/AKfycbyk3IWE3PgtD8EJHbWSSlLfI4CKJ7PiTZ7VtZvZxDbNDPVK7_hY0e3LOhzluUbbN4F3Xg/exec";
 
-function postData(data){
+// ===== GPS AUTO FETCH =====
+function getLocation(){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(function(position){
+      latitude.value = position.coords.latitude;
+      longitude.value = position.coords.longitude;
+
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`)
+      .then(res=>res.json())
+      .then(data=>{
+        address.value = data.display_name;
+        area.value = data.address.village || data.address.town || "";
+      });
+    });
+  } else {
+    alert("GPS not supported");
+  }
+}
+
+// ===== SAVE USER =====
+function saveUser(){
+
   fetch(url,{
     method:"POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      userType:userType.value,
+      lapu:lapu.value,
+      contact:contact.value,
+      shopName:shopName.value,
+      owner:owner.value,
+      latitude:latitude.value,
+      longitude:longitude.value,
+      address:address.value,
+      area:area.value,
+      zone:zone.value,
+      remarks:remarks.value
+    })
   })
-  .then(res => res.json())
-  .then(res => {
-    let m = document.getElementById("msg");
-
-    if(res.status === "success"){
-      m.className = "success";
-      m.innerHTML = "✔ " + res.message +
-      (res.agentCode ? "<br>Agent Code: " + res.agentCode : "");
-    } else {
-      m.className = "error";
-      m.innerHTML = "✖ " + res.message;
+  .then(res=>res.json())
+  .then(res=>{
+    let m=document.getElementById("msg");
+    if(res.status==="success"){
+      m.className="success";
+      m.innerHTML="✔ "+res.message;
+    }else{
+      m.className="error";
+      m.innerHTML="✖ "+res.message;
     }
-  })
-  .catch(err => {
-    document.getElementById("msg").innerHTML = "Server Error";
-  });
-}
-
-function saveUser(){
-  postData({
-    type:"user",
-    userType:userType.value,
-    lapu:lapu.value,
-    contact:contact.value,
-    shopName:shopName.value,
-    owner:owner.value,
-    address:address.value,
-    area:area.value,
-    village:village.value,
-    zone:zone.value,
-    latitude:latitude.value,
-    longitude:longitude.value
-  });
-}
-
-function saveStock(){
-  postData({
-    type:"distributorStock",
-    distributorName:distName.value,
-    simType:simType.value,
-    simQuantity:simQty.value,
-    remark:remark.value
   });
 }
 
